@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "360641731546",
+    "project_id": "bcbslatest-1fa07",
+    "storage_bucket": "bcbslatest-1fa07.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:360641731546:android:95107f53b1d41ecb8d7ee3",
+        "android_client_info": {
+          "package_name": "com.bcbsla.analytics"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHZ3A6Je5K0IVS0dxE-Ak-vtkJO8A5Tvs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
