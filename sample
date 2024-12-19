@@ -1,0 +1,81 @@
+Information about Android Signing Certificate 
+
+Use Play app signing
+With Play app signing, Google manages and protects your app's signing key for you and uses it to sign optimised distribution APKs that are generated from your app bundles. Play app signing stores your app signing key on Google's secure infrastructure and offers upgrade options to increase security.
+To use Play app signing in, you need to be an account owner or a user with the Release to production, exclude devices and use Play app signing permission, and you need to accept the Play app signing Terms of Service.
+
+How it works
+When you use Play app signing, your keys are stored on the same infrastructure that Google uses to store its own keys. Keys are protected by Google's key management service.
+Android apps are signed with a private key. To ensure that app updates are trustworthy, every private key has an associated public certificate that devices and services use to verify that the app update is from the same source. Devices only accept updates when their signature matches the installed app’s signature. By letting Google manage your app signing key, it makes this process more secure.
+Note: For apps created before August 2021, you can still upload an APK and manage your own keys instead of using Play app signing and publishing with an Android App Bundle. However, if you lose your keystore or it becomes compromised, you won't be able to update your app without publishing a new app with a new package name. For these apps, Play recommends using Play app signing and switching to app bundles.
+
+Descriptions of keys, artifacts and tools
+Term	Description
+App signing key	The key Google Play uses to sign the APKs that are delivered to a user's device. When you use Play app signing, you can either upload an existing app signing key or have Google generate one for you.
+Keep your app signing key secret, but you can share your app’s public certificate with others.
+Upload key	The key that you use to sign your app bundle before you upload it on Google Play. Keep your upload key secret, but you can share your app’s public certificate with others. For security reasons, it’s a good idea to have app signing and upload keys that are different from each other.
+There are two ways to generate an upload key:
+•	Use your app signing key: If you have Google generate an app signing key, the key that you use for your first release is also your upload key.
+•	Use a separate upload key: If you provide your own app signing key, you are given the option to generate a new upload key for increased security. If you don't generate one, use your app signing key as your upload key to sign releases.
+Certificate (.der or .pem)	A certificate contains a public key and extra identifying information about who owns the key. The public key certificate lets anyone verify who signed the app bundle or APK, and you can share it with anyone because it doesn’t include your private key.
+To register your key(s) with API providers, you can download the public certificate for your app signing key and your upload key from the Play app signing page (Test and release > Setup > App signing) in Play Console. The public key certificate can be shared with anyone. It doesn't include your private key.
+Certificate fingerprint	A short and unique representation of a certificate that is often requested by API providers with the package name to register an application to use their service.
+The MD5, SHA-1 and SHA-256 fingerprints of the upload and app signing certificates can be found on the Play app signing page (Test and release > Setup > App signing) in Play Console. Other fingerprints can also be computed by downloading the original certificate (.der) on the same page.
+Java keystore (.jks or .keystore)	A repository of security certificates and private keys.
+Play Encrypt Private Key (PEPK) tool	A tool to export private keys from a Java keystore and encrypt them for transfer to Google Play.
+When you provide the app signing key for Google to use, select the option to export and upload your key (and its public certificate if required) and follow the instructions to download and use the tool. If you prefer, you can download, review and use the PEPK tool’s open-source code.
+
+
+Instructions for apps created before August 2021
+Step 1: Configure Play app signing
+1.	Open Play Console and go to the Play app signing page (Test and release > Setup > App signing).
+•	Tip: You can also access this page via the App integrity page (Test and release > App integrity), which contains integrity and signing services that help you ensure that users experience your apps and games in the way that you intend.
+2.	If you haven't already, review the Play app signing Terms of Service and select Accept.
+Step 2: Send a copy of your original key to Google and create an upload key
+1.	Locate your original app signing key.
+2.	Open Play Console and go to the Play app signing page (Test and release > Setup > App signing).
+3.	Select the export and upload option that best suits your release process and upload an existing app signing key.
+Step 3: Create an upload key (optional and recommended)
+1.	Create an upload key and upload the certificate to Google Play.
+•	You can also continue to use the app signing key as your upload key.
+2.	Copy the fingerprints (MD5, SHA-1 and SHA-256) of your app signing certificate.
+•	For testing purposes, you may need to register the certificate of your upload key with API providers using the certificate fingerprint and the app signing key.
+Step 4: Sign your next app update with the upload key
+When you release updates for your app, you need to sign them with your upload key.
+•	If you didn’t generate a new upload key: Continue using your original app signing key to sign app bundles before you upload them to Google Play. If you lose your original app signing key, you can generate a new upload key and register it with Google to continue updating your app.
+•	If you generated a new upload key: Use your new upload key to sign app bundles before you upload them to Google Play. Google uses the upload key to verify your identity. If you lose your upload key, you can contact support to reset it.
+Upgrade your app signing key
+In some circumstances, you can request an app signing key upgrade.
+Here are a couple of reasons to request an app signing key upgrade:
+•	You need a cryptographically stronger key.
+•	Your app signing key has been compromised.
+Important: Key upgrades are only supported for apps that use app bundles.
+Before requesting a key upgrade, it’s important to understand the changes that you may need to make once the upgrade is complete.
+•	If you use the same app signing key for multiple apps to share data/code between them, you need to update your apps to recognise both your new and legacy app signing key certificates. On devices running Android S (API level 32) or below, only the legacy app signing key certificate is recognised by the Android platform for the purpose of data/code sharing.
+•	If your app uses APIs, make sure that you register the certificates for your new and legacy app signing key with API providers before publishing an update, to ensure that the APIs continue working. Certificates are available on the Play app signing page (Test and release > Setup > App signing) in Play Console.  
+•	If any of your users install updates via peer-to-peer sharing, they'll only be able to install updates that are signed with the same key as the version of your app which they already have installed. If they’re unable to update their app because they have a version of your app that’s signed with a different key, they have the option of uninstalling and reinstalling the app to get the update.
+Each app can have its app signing key upgraded for all installs on Android N (API level 24) and above once annually.
+If you successfully request this key upgrade, your new key is used to sign all installs and app updates. On devices running Android T (API level 33) and above, the Android platform enforces the usage of the upgraded key. On devices running Android S (API level 32) or below, the Android platform does not enforce the usage of this upgraded key and still recognises the legacy signing key as the app's signing key. This also includes any Android platform features (for example, custom permission sharing) that rely on the app's signing key. On devices running Android N (API level 24) to Android S (API level 32), Google Play Protect will check that app updates are signed with your upgraded key, unless turned off by the user. This provides an additional validation since the Android platform does not enforce the usage of the upgraded key on devices running Android S (API level 32) or below.
+1.	Open Play Console and go to the Play app signing page (Test and release > Setup > App signing).
+•	Tip: You can also access this page via the App integrity page (Test and release > App integrity), which contains integrity and signing services that help you ensure that users experience your apps and games in the way you intend.
+2.	In the 'Upgrade your app signing key' card, select Request key upgrade.
+3.	Select an option to upgrade your app signing key to all installs on Android N and above.
+4.	Get Google to generate a new app signing key (recommended) or upload one.
+•	After upgrading your app signing key, if you were using the same key for your app signing and upload key, you can continue using your legacy app signing key as your upload key or generate a new upload key.
+5.	Select a reason for requesting app signing key upgrade.
+6.	If necessary, register your new app signing key with API providers.
+Tip: If you distribute your app on multiple distribution channels and you want to maximise app update compatibility for your users, you should upgrade your key on each distribution channel. To be compatible with Google Play’s key upgrade, use the ApkSigner tool, bundled with Android SDK Build Tools (revision 33.0.1+):
+$ apksigner sign --in ${INPUT_APK}
+--out ${OUTPUT_APK}
+--ks ${ORIGINAL_KEYSTORE}
+--ks-key-alias ${ORIGINAL_KEY_ALIAS}
+--next-signer --ks ${UPGRADED_KEYSTORE}
+--ks-key-alias ${UPGRADED_KEY_ALIAS}
+--lineage ${LINEAGE}
+Lost or compromised upload key?
+If you’ve lost your private upload key or it’s been compromised, you can create a new one. Your developer account owner can then initiate a key reset in Play Console.
+After our support team registers the new upload key, the account owner and global admins will receive an inbox message and email with further information. You can then update your keystores and register your key with API providers.
+The account owner can also cancel the reset request in Play Console.
+Important: Resetting your upload key doesn’t affect the app signing key that Google Play uses to re-sign APKs before delivering them to users.
+
+
