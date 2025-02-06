@@ -2,3 +2,31 @@ Download the Transporter app from the Mac App Store (if you don’t already have
 Open Transporter and log in with your Apple Developer account.
 Drag and drop your .ipa file into Transporter.
 Click Deliver to upload the app to App Store Connect.
+
+
+4. Update App Store Connect Metadata
+Once the new build has been uploaded and processed by App Store Connect:
+
+Go to App Store Connect and sign in with your Apple Developer account.
+Navigate to My Apps and select your existing app.
+Under the App Store tab, you will see the "Versions" section.
+Click on the "+" to add the new version.
+Fill in the necessary metadata, such as:
+Version number: Make sure this matches the version you set in Xcode (e.g., 1.1).
+What’s New in this Version: Provide a brief description of what has changed (bug fixes, new features, improvements).
+Screenshots: You may need to update the screenshots if the design of your app has changed, especially if it involves new features or screens.
+5. Submit for Review
+Once you’ve updated the metadata, you can submit the update for review:
+
+After adding the new version details, select the uploaded build under Build.
+Click on Submit for Review.
+6. Wait for Review
+After submitting, your app will go through Apple's review process. The review typically takes a few days, but can vary depending on factors like app complexity and the volume of submissions.
+
+Apple may approve or reject the update. If rejected, they will provide feedback, and you will need to make the necessary changes before resubmitting.
+If approved, your updated app will be published on the App Store.
+7. Monitor the Update
+Once the app update is live, you can:
+
+Track app performance: Monitor your app’s performance, ratings, and reviews through App Store Connect.
+Check for issues: If any new bugs or issues arise, you can release additional updates by repeating this process.
