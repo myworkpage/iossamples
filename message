@@ -1,7 +1,4 @@
-Hi Wayne,
-
-I hope you're doing well!
-
-I’m reaching out to ask if you could assist us with updating the environment variables for the Android Keystore password in the CI/CD pipeline. Both Tom and I don’t have the necessary permissions to make these updates ourselves, and we need the Keystore password to be set as bcbsla@1234.
-
-Would you be able to help with this? Let us know if you need any additional details.
+Download the Transporter app from the Mac App Store (if you don’t already have it).
+Open Transporter and log in with your Apple Developer account.
+Drag and drop your .ipa file into Transporter.
+Click Deliver to upload the app to App Store Connect.
