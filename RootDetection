@@ -1,0 +1,104 @@
+using System.IO;
+using System.Diagnostics;
+using Android.Content.PM;
+using Android.App;
+
+public class RootDetection
+{
+    // Method to check if the device is rooted by looking for specific files
+    public bool IsDeviceRootedByFilePaths()
+    {
+        string[] rootPaths = new string[]
+        {
+            "/system/app/Superuser.apk", // The superuser app on rooted devices
+            "/system/xbin/su",           // The binary file for root access
+            "/system/bin/su",            // Another su binary location
+            "/sbin/su",                  // Location of su binary on some devices
+            "/data/data/com.noshufou.android.su", // Some apps like SuperSU store data here
+        };
+
+        foreach (var path in rootPaths)
+        {
+            if (File.Exists(path))
+            {
+                return true; // Device is likely rooted
+            }
+        }
+        return false; // No indication of root
+    }
+
+    // Method to check if the device has a su binary installed
+    public bool IsDeviceRootedBySuBinary()
+    {
+        string[] suPaths = new string[]
+        {
+            "/system/xbin/su",
+            "/system/bin/su",
+            "/sbin/su"
+        };
+
+        foreach (string suPath in suPaths)
+        {
+            if (File.Exists(suPath))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Method to check if root management apps like SuperSU or Magisk are installed
+    public bool IsRootManagementAppInstalled()
+    {
+        try
+        {
+            var packageManager = Application.Context.PackageManager;
+            packageManager.GetPackageInfo("eu.chainfire.supersu", PackageInfoFlags.MatchDefaultOnly); // SuperSU package name
+            return true; // SuperSU or a similar root management app is installed
+        }
+        catch (PackageManager.NameNotFoundException)
+        {
+            return false; // The app is not installed
+        }
+    }
+
+    // Method to check if the system integrity is tampered (e.g., test-keys in build)
+    public bool IsSystemTampered()
+    {
+        // Check for build information that indicates tampering
+        string buildTags = Android.OS.Build.Tags;
+        if (buildTags != null && buildTags.Contains("test-keys"))
+        {
+            return true; // Indicates the system might be tampered
+        }
+
+        return false;
+    }
+
+    // Method to attempt to execute a root command and check if it returns successfully
+    public bool CanExecuteRootCommand()
+    {
+        try
+        {
+            Process process = new Process();
+            process.StartInfo.FileName = "su";
+            process.StartInfo.Arguments = "-c echo test";
+            process.StartInfo.RedirectStandardOutput = true;
+            process.Start();
+            process.WaitForExit();
+            
+            return process.ExitCode == 0; // If exit code is 0, the command executed successfully, meaning the device is rooted
+        }
+        catch
+        {
+            return false; // Exception occurs if root command can't be executed
+        }
+    }
+
+    // Combined method to detect if the device is rooted
+    public bool IsDeviceRooted()
+    {
+        return IsDeviceRootedByFilePaths() || IsDeviceRootedBySuBinary() || IsRootManagementAppInstalled() || IsSystemTampered() || CanExecuteRootCommand();
+    }
+}
