@@ -1,0 +1,51 @@
+using System;
+using System.IO;
+using Foundation;
+using UIKit;
+
+namespace YourAppNamespace
+{
+    public class JailbreakDetection
+    {
+        // Checks for known files and directories typically associated with jailbreaking
+        public bool IsDeviceJailbroken()
+        {
+            return IsDeviceJailbrokenByFilePaths() || CanOpenCydia();
+        }
+
+        // Method to check known jailbreak-related file paths
+        private bool IsDeviceJailbrokenByFilePaths()
+        {
+            string[] jailbrokenPaths = new string[]
+            {
+                "/Applications/Cydia.app",         // Cydia app path
+                "/private/var/lib/apt",           // Package manager directories
+                "/private/var/stash",
+                "/private/var/mobile/Library/SBSettings/Themes", // SBSettings themes
+                "/usr/sbin/sshd",                 // SSH daemon (often used for jailbreaking)
+                "/usr/bin/ssh"                    // SSH binary (often used for jailbreaking)
+            };
+
+            foreach (var path in jailbrokenPaths)
+            {
+                if (Directory.Exists(path) || File.Exists(path))
+                {
+                    return true; // Jailbreak indicators found
+                }
+            }
+            return false; // No jailbreak indicators found
+        }
+
+        // Check if the device can open Cydia (common jailbreak app)
+        private bool CanOpenCydia()
+        {
+            // Cydia is a package manager commonly used on jailbroken devices
+            if (UIApplication.SharedApplication.CanOpenUrl(new NSUrl("cydia://")))
+            {
+                return true; // The device can open Cydia, indicating it's likely jailbroken
+            }
+
+            return false;
+        }
+    }
+}
