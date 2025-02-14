@@ -1,0 +1,43 @@
+[Register("AppDelegate")]
+    public class AppDelegate : MauiUIApplicationDelegate
+    {
+        public override bool FinishedLaunching(UIApplication app, NSDictionary options)
+        {
+            // Initialize Jailbreak Detection
+            var jailbreakDetection = new JailbreakDetection();
+
+            if (jailbreakDetection.IsDeviceJailbroken())
+            {
+                // If the device is jailbroken, show a warning and exit
+                ShowJailbreakWarning();
+                return false; // Return false to prevent the app from launching
+            }
+
+            // Continue with the normal app launch
+            return base.FinishedLaunching(app, options);
+        }
+
+        // Show an alert to warn the user and then exit the app
+        private void ShowJailbreakWarning()
+        {
+            // Create an alert to inform the user about the jailbroken device
+            var alert = UIAlertController.Create("Security Warning", "This device is jailbroken, and the app cannot run. The app will now exit.", UIAlertControllerStyle.Alert);
+
+            // Add an "OK" button that will quit the app
+            alert.AddAction(UIAlertAction.Create("OK", UIAlertActionStyle.Default, action =>
+            {
+                // Quit the app
+                ExitApp();
+            }));
+
+            // Present the alert
+            UIApplication.SharedApplication.KeyWindow.RootViewController.PresentViewController(alert, true, null);
+        }
+
+        // Forcefully exit the app
+        private void ExitApp()
+        {
+            // PerformSelector to terminate the app
+            UIApplication.SharedApplication.PerformSelector(new ObjCRuntime.Selector("terminateWithSuccess"), null, 0);
+        }
+    }
