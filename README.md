@@ -24,3 +24,14 @@ Review device details:
 - Device type: iPad Air 11-inch (M2)
 
 - OS version: iPadOS 18.4.1
+
+
+Thank you for your feedback.
+
+We have conducted extensive testing and troubleshooting on our end, specifically using devices running iPadOS 18.4.1. During our testing, we were unable to reproduce the crash that was reported. The app launches and functions as expected across all test scenarios.
+
+To assist with further investigation, we would appreciate any additional context or reproduction steps that might help us identify the issue more accurately.
+
+Please let us know if there’s anything specific we can do to help move the review process forward.
+
+Thank you for your time and support.
