@@ -1,0 +1,111 @@
+trigger:
+  branches:
+    include:
+      - master
+      - feat/*
+  paths:
+    include:
+      - src/app/*
+    exclude:
+      - src/api/*
+
+jobs:
+  - job: Android_Uat
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+    
+    - task: UseDotNet@2
+      inputs:
+        displayName: 'Use version of .NET in global.json'
+        useGlobalJson: true
+
+    - task: CmdLine@2
+      inputs:
+        script: 'dotnet workload install maui'
+
+    - task: DeleteFiles@1
+      inputs:
+        SourceFolder: '$(agent.builddirectory)'
+        Contents: '/src/api/*'
+        RemoveSourceFolder: true
+
+    - task: JavaToolInstaller@0
+      inputs:
+        versionSpec: '11'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'build'
+        projects: 'src/app/Bcbsla.Mobile.App.Droid/Bcbsla.Mobile.App.Droid.csproj'
+        arguments: '-c Release_Test -f:net9.0-android35.0'
+
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: '$(agent.builddirectory)'
+        Contents: '**/*-Signed.aab'
+        TargetFolder: '$(build.artifactstagingdirectory)/UAT'
+        flattenFolders: true
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/UAT'
+        ArtifactName: 'drop_uat'
+        publishLocation: 'Container'
+
+  - job: Android_Prod
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+
+    - task: UseDotNet@2
+      inputs:
+        displayName: 'Use version of .NET in global.json'
+        useGlobalJson: true
+
+    - task: CmdLine@2
+      inputs:
+        script: 'dotnet workload install maui'
+
+    - task: DeleteFiles@1
+      inputs:
+        SourceFolder: '$(agent.builddirectory)'
+        Contents: '/src/api/*'
+        RemoveSourceFolder: true
+
+    - task: CmdLine@2
+      displayName: 'Swap google-services json files'
+      inputs:
+        script: 'mv src/app/Bcbsla.Mobile.App.Droid/google-services.Prod.json src/app/Bcbsla.Mobile.App.Droid/google-services.json'            
+
+    - task: CmdLine@2
+      displayName: 'Swap strings.xml files'
+      inputs:
+        script: 'mv src/app/Bcbsla.Mobile.App.Droid/Resources/values/strings.Prod.xml src/app/Bcbsla.Mobile.App.Droid/Resources/values/strings.xml'  
+
+    - task: JavaToolInstaller@0
+      inputs:
+        versionSpec: '11'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'build'
+        projects: 'src/app/Bcbsla.Mobile.App.Droid/Bcbsla.Mobile.App.Droid.csproj'
+        arguments: '-c Release_GooglePlay -f:net9.0-android35.0 -p:AndroidSigningKeyPass=$(KeystorePassword) -p:AndroidSigningStorePass=$(KeystorePassword)'
+
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: '$(agent.builddirectory)'
+        Contents: '**/*-Signed.aab'
+        TargetFolder: '$(build.artifactstagingdirectory)/PROD'
+        flattenFolders: true
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/PROD'
+        ArtifactName: 'drop_prod'
+        publishLocation: 'Container'
