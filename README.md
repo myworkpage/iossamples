@@ -43,3 +43,25 @@ Thank you for your time and support.
 
 
 ---------------1//0gONB_M2epRwtCgYIARAAGBASNwF-L9IrOTWEBZXwMDg1vDdp77334TGNcbBwG3FH03jz1SHtz6gpXaNku_81tg1I4T2VQOz1Xqs-------------------
+
+
+
+          Fatal Exception: android.runtime.JavaProxyThrowable: [System.NullReferenceException]: Object reference not set to an instance of an object
+       at Bcbsla.Mobile.App.Droid.Views.Providers.ProviderSearchResultsView+<OnCreate>d__23.MoveNext + 0x406()
+       at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw + 0x11()
+       at System.Threading.Tasks.Task+<>c.<ThrowAsync>b__128_0 + 0x0()
+       at Android.App.SyncContext+<>c__DisplayClass2_0.<Post>b__0 + 0x0()
+       at Java.Lang.Thread+RunnableImplementor.Run + 0x8()
+       at Java.Lang.IRunnableInvoker.n_Run + 0x8()
+       at Android.Runtime.JNINativeWrapper.Wrap_JniMarshal_PP_V + 0x5()
+       at mono.java.lang.RunnableImplementor.n_run(RunnableImplementor.java)
+       at mono.java.lang.RunnableImplementor.run(RunnableImplementor.java:29)
+       at android.os.Handler.handleCallback(Handler.java:958)
+       at android.os.Handler.dispatchMessage(Handler.java:99)
+       at android.os.Looper.loopOnce(Looper.java:230)
+       at android.os.Looper.loop(Looper.java:319)
+       at android.app.ActivityThread.main(ActivityThread.java:8919)
+       at java.lang.reflect.Method.invoke(Method.java)
+       at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:578)
+       at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1103)
+        
