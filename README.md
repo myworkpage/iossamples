@@ -98,4 +98,25 @@ The app will be used as a test app for Epic/MyChart mobile app
 Name the testing app in alignment for internal, employee only testing
 Deprecate the app when MyChart Mobile App is launched
 Work with Ryan Kling and George Race from Epic
-        
+
+
+
+
+
+1. Platform/Framework Choice
+Is the new test application expected to be developed using .NET MAUI, or should it be built natively for Android (and separately for iOS)?
+
+2. Purpose and Scope of Integration
+Is the intent to fully replace our existing app with a new one built on top of Epic’s MyChart platform, or are we simply integrating MyChart functionalities into the existing app?
+
+3. Testing Strategy and App Lifecycle
+How long is the test app expected to be in use before it is deprecated? Is it purely internal (for employee testing), or will it also support limited external test users?
+
+4. Publishing and Deployment
+Although the app will not be published publicly, should it be uploaded to the Play Store under a closed/internal track for internal distribution and testing?
+
+5. App Naming and Branding
+Do we have a specific naming convention or internal branding guidelines for the test app to differentiate it from the production app?
+
+6. Account and Console Setup
+Should this test app be created under our existing Google Play Console account or a separate internal/testing account?
