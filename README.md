@@ -81,4 +81,21 @@ Thank you for your time and support.
         --token $(FirebaseToken) \
         --groups testers
       displayName: 'Distribute AAB to Firebase UAT'
+
+
+
+
+
+
+      In order to transition to Epic/MyChart Platform (or have test apps in each store)
+As a mobile developer
+I need to create a "test" app in the Google Play Store
+
+Assumptions:
+Develop an app to be placed in the Google Play Store
+Do NOT publish the the app so that we can continue to update the legacy app
+The app will be used as a test app for Epic/MyChart mobile app
+Name the testing app in alignment for internal, employee only testing
+Deprecate the app when MyChart Mobile App is launched
+Work with Ryan Kling and George Race from Epic
         
