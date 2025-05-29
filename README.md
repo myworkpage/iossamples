@@ -64,4 +64,21 @@ Thank you for your time and support.
        at java.lang.reflect.Method.invoke(Method.java)
        at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:578)
        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1103)
+
+
+        - task: NodeTool@0
+      inputs:
+        versionSpec: '16.x'
+      displayName: 'Install Node.js'
+
+    - script: |
+        npm install -g firebase-tools
+      displayName: 'Install Firebase CLI'
+
+    - script: |
+        firebase appdistribution:distribute "$(Build.ArtifactStagingDirectory)/UAT/*-Signed.aab" \
+        --app $(FirebaseUatAppId) \
+        --token $(FirebaseToken) \
+        --groups testers
+      displayName: 'Distribute AAB to Firebase UAT'
         
