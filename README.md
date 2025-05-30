@@ -123,3 +123,14 @@ Do we have a specific naming convention or internal branding guidelines for the 
 
 6. Account and Console Setup
 Should this test app be created under our existing Google Play Console account or a separate internal/testing account?
+
+
+'$Token' is not recognized as an internal or external command,
+operable program or batch file.
+'Write-Host' is not recognized as an internal or external command,
+operable program or batch file.
+'Get-ChildItem' is not recognized as an internal or external command,
+operable program or batch file.
+'Write-Host' is not recognized as an internal or external command,
+operable program or batch file.
+##[error]Cmd.exe exited with code '1'.
