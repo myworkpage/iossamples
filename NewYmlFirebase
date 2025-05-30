@@ -62,12 +62,19 @@ jobs:
           npm install -g firebase-tools
         displayName: 'Install Firebase CLI'
 
-      - script: |
-          firebase appdistribution:distribute "$(Build.ArtifactStagingDirectory)/UAT/*-Signed.aab" \
-            --app $(FirebaseUatAppId) \
-            --token $(FirebaseToken) \
-            --groups testers
-        displayName: 'Distribute AAB to Firebase UAT'
+- script: |
+    $AppId = "1:1234567890:android:abcdef123456"
+    $Token = "your-firebase-ci-token"
+
+    Write-Host "Checking for .aab file..."
+    Get-ChildItem "$(Build.ArtifactStagingDirectory)\UAT\*-Signed.aab"
+
+    Write-Host "Distributing AAB to Firebase..."
+    firebase appdistribution:distribute "$(Build.ArtifactStagingDirectory)\UAT\*-Signed.aab" `
+      --app $AppId `
+      --token $Token `
+      --groups testers
+  displayName: 'Distribute AAB to Firebase (Hardcoded)'
 
       - task: PublishBuildArtifacts@1
         displayName: 'Publish UAT Artifacts'
