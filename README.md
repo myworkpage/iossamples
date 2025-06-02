@@ -151,3 +151,21 @@ operable program or batch file.
 'Write-Host' is not recognized as an internal or external command,
 operable program or batch file.
 ##[error]Cmd.exe exited with code '1'.
+
+
+
+- script: |
+    echo Setting Firebase App ID and Firebase_Token...
+    set AppId=1234
+    set Token=xxxx
+
+    echo Checking for .aab file...
+    dir "%Build.ArtifactStagingDirectory%\UAT"
+
+    echo Distributing aab to Firebase...
+    firebase appdistribution:distribute "%Build.ArtifactStagingDirectory%\UAT\*-Signed.aab" ^
+      --app %AppId% ^
+      --token %Token% ^
+      --groups uat_qa
+  displayName: 'Distribute AAB to Firebase UAT'
+
