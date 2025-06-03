@@ -169,3 +169,26 @@ operable program or batch file.
       --groups uat_qa
   displayName: 'Distribute AAB to Firebase UAT'
 
+
+
+  Setting Firebase App ID and Firebase_Token... 
+Checking for .aab file... 
+ Volume in drive D is Temporary Storage
+ Volume Serial Number is 58DB-5D7A
+
+ Directory of D:\
+File Not Found
+
+Distributing aab to Firebase... 
+'firebase' is not recognized as an internal or external command,
+operable program or batch file.
+'--app' is not recognized as an internal or external command,
+operable program or batch file.
+'--token' is not recognized as an internal or external command,
+operable program or batch file.
+'--groups' is not recognized as an internal or external command,
+operable program or batch file.
+##[error]Cmd.exe exited with code '1'.
+Finishing: Distribute AAB to Firebase UAT
+
+
