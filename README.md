@@ -214,37 +214,34 @@ Finishing: Install Firebase CLI and Distribute AAB with Service Account
 
 
 
-- task: DownloadSecureFile@1
-  name: downloadFirebaseJson
-  displayName: 'Download Firebase Service Account JSON'
-  inputs:
-    secureFile: 'firebase-uat-service-account.json'  # Update as needed
-
-- script: |
-    echo Installing Firebase CLI...
-    npm install -g firebase-tools
-
-    echo Setting GOOGLE_APPLICATION_CREDENTIALS...
-    $env:GOOGLE_APPLICATION_CREDENTIALS = "$(Agent.TempDirectory)/$(downloadFirebaseJson.secureFileName)"
-
-    echo Checking for AAB file in: $(Build.ArtifactStagingDirectory)/UAT
-    Get-ChildItem "$(Build.ArtifactStagingDirectory)/UAT"
-
-    $aabPath = Get-ChildItem "$(Build.ArtifactStagingDirectory)/UAT/*-Signed.aab" | Select-Object -First 1
-
-    if ($null -eq $aabPath) {
-      Write-Error "No signed AAB file found to distribute."
-      exit 1
-    }
-
-    echo Distributing to Firebase...
-    firebase appdistribution:distribute "$($aabPath.FullName)" `
-      --app "$env:FirebaseAppId_UAT" `
-      --groups uat_qa
+- task: PowerShell@2
   displayName: 'Distribute AAB with Firebase CLI (Service Account)'
-  shell: pwsh
+  inputs:
+    targetType: 'inline'
+    script: |
+      echo Installing Firebase CLI...
+      npm install -g firebase-tools
+
+      echo Setting GOOGLE_APPLICATION_CREDENTIALS...
+      $env:GOOGLE_APPLICATION_CREDENTIALS = "$(Agent.TempDirectory)/$(downloadFirebaseJson.secureFileName)"
+
+      echo Checking for AAB file in: $(Build.ArtifactStagingDirectory)/UAT
+      Get-ChildItem "$(Build.ArtifactStagingDirectory)/UAT"
+
+      $aabPath = Get-ChildItem "$(Build.ArtifactStagingDirectory)/UAT/*-Signed.aab" | Select-Object -First 1
+
+      if ($null -eq $aabPath) {
+        Write-Error "❌ No signed AAB file found to distribute."
+        exit 1
+      }
+
+      echo Distributing to Firebase...
+      firebase appdistribution:distribute "$($aabPath.FullName)" `
+        --app "$env:FirebaseAppId_UAT" `
+        --groups uat_qa
   env:
     GOOGLE_APPLICATION_CREDENTIALS: "$(Agent.TempDirectory)/$(downloadFirebaseJson.secureFileName)"
     FirebaseAppId_UAT: "$(FirebaseAppId_UAT)"
+
 
 
