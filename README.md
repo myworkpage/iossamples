@@ -192,3 +192,23 @@ operable program or batch file.
 Finishing: Distribute AAB to Firebase UAT
 
 
+
+Starting: Install Firebase CLI and Distribute AAB with Service Account
+==============================================================================
+Task         : Command line
+Description  : Run a command line script using Bash on Linux and macOS and cmd.exe on Windows
+Version      : 2.250.1
+Author       : Microsoft Corporation
+Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/command-line
+==============================================================================
+Generating script.
+========================== Starting Command Output ===========================
+"C:\Windows\system32\cmd.exe" /D /E:ON /V:OFF /S /C "CALL "D:\a\_temp\0cf0aefe-ef07-4623-93e1-ed52f1010ead.cmd""
+Installing Firebase CLI...
+
+added 700 packages in 3m
+
+79 packages are looking for funding
+  run `npm fund` for details
+Finishing: Install Firebase CLI and Distribute AAB with Service Account
+
