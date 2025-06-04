@@ -87,8 +87,9 @@ jobs:
           --groups uat_qa
       displayName: 'Install Firebase CLI and Distribute AAB with Service Account'
       env:
-        GOOGLE_APPLICATION_CREDENTIALS: "$(Agent.TempDirectory)\$(downloadFirebaseJson.secureFileName)"
-        FirebaseAppId_UAT: $(FirebaseAppId_UAT)  # Ensure this is set in pipeline variables
+        GOOGLE_APPLICATION_CREDENTIALS: "$(Agent.TempDirectory)/$(downloadFirebaseJson.secureFileName)"
+        FirebaseAppId_UAT: "$(FirebaseAppId_UAT)"
+
 
     - task: PublishBuildArtifacts@1
       displayName: 'Publish UAT Artifacts'
