@@ -11,11 +11,11 @@ trigger:
 
 jobs:
   - job: Android_Uat
-  displayName: 'Build and Distribute Android UAT'
-  pool:
-    vmImage: 'windows-latest'
+    displayName: 'Build and Distribute Android UAT'
+    pool:
+      vmImage: 'windows-latest'
 
-  steps:
+    steps:
     - task: UseDotNet@2
       inputs:
         displayName: 'Use .NET from global.json'
@@ -82,14 +82,13 @@ jobs:
           --token $env:Token `
           --groups uat_qa
       displayName: 'Install Firebase CLI and Distribute AAB'
-      shell: pwsh
 
     - task: PublishBuildArtifacts@1
       displayName: 'Publish UAT Artifacts'
       inputs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)/UAT'
         ArtifactName: 'drop_uat'
-        publishLocation: 'Container'
+        publishLocation: 'Container' 
 
   - job: Android_Prod
     pool:
