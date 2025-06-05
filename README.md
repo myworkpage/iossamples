@@ -299,5 +299,20 @@ Z Installing
     GOOGLE_APPLICATION_CREDENTIALS: "$(Agent.TempDirectory)/firebase-uat-service-account.json"
     FirebaseAppId_UAT: "$(FirebaseAppId_UAT)"
 
-
+Installing Firebase CLI...
+2025-06-05T18:22:29.5779032Z 
+2025-06-05T18:22:29.5780995Z added 701 packages in 2m
+2025-06-05T18:22:29.5781406Z 
+2025-06-05T18:22:29.5781752Z 79 packages are looking for funding
+2025-06-05T18:22:29.5782047Z   run `npm fund` for details
+2025-06-05T18:22:29.6074898Z Using GOOGLE_APPLICATION_CREDENTIALS: D:\a\_temp/android-firebase-uat.json
+2025-06-05T18:22:29.6076016Z Checking for AAB file in: D:\a\1\a\UAT
+2025-06-05T18:22:29.7077382Z Distributing to Firebase App Distribution...
+2025-06-05T18:22:32.4626909Z 
+2025-06-05T18:22:32.5807728Z [1m[31mError:[39m[22m Failed to authenticate, have you run [1mfirebase login[22m?
+2025-06-05T18:22:33.3057961Z ##[error]PowerShell exited with code '1'.
+2025-06-05T18:22:33.3576928Z ##[section]Finishing: Distribute AAB with Firebase CLI (Service Account)
+2025-06-05T18:22:33.3604935Z Skipping step due to condition evaluation.
+Evaluating: SucceededNode()
+Result: False
 
