@@ -231,7 +231,7 @@ Finishing: Install Firebase CLI and Distribute AAB with Service Account
       $aabPath = Get-ChildItem "$(Build.ArtifactStagingDirectory)/UAT/*-Signed.aab" | Select-Object -First 1
 
       if ($null -eq $aabPath) {
-        Write-Error "❌ No signed AAB file found to distribute."
+        Write-Error "No signed AAB file found to distribute."
         exit 1
       }
 
@@ -242,6 +242,7 @@ Finishing: Install Firebase CLI and Distribute AAB with Service Account
   env:
     GOOGLE_APPLICATION_CREDENTIALS: "$(Agent.TempDirectory)/$(downloadFirebaseJson.secureFileName)"
     FirebaseAppId_UAT: "$(FirebaseAppId_UAT)"
+
 
 
 
