@@ -246,3 +246,28 @@ Finishing: Install Firebase CLI and Distribute AAB with Service Account
 
 
 
+
+Z Installing
+2025-06-05T15:41:33.1527357Z Firebase
+2025-06-05T15:41:33.1528925Z CLI...
+2025-06-05T15:44:33.0058381Z 
+2025-06-05T15:44:33.0059348Z added 701 packages in 3m
+2025-06-05T15:44:33.0059654Z 
+2025-06-05T15:44:33.0059910Z 79 packages are looking for funding
+2025-06-05T15:44:33.0060175Z   run `npm fund` for details
+2025-06-05T15:44:33.0556247Z Setting
+2025-06-05T15:44:33.0556732Z GOOGLE_APPLICATION_CREDENTIALS...
+2025-06-05T15:44:33.6629178Z downloadFirebaseJson.secureFileName : The term 'downloadFirebaseJson.secureFileName' is not recognized as the name of 
+2025-06-05T15:44:33.6630166Z a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, 
+2025-06-05T15:44:33.6630491Z verify that the path is correct and try again.
+2025-06-05T15:44:33.6631744Z At D:\a\_temp\a5d7b46d-8cb6-4a13-9ce6-273b973c37c5.ps1:8 char:53
+2025-06-05T15:44:33.6632557Z + ... ION_CREDENTIALS = "D:\a\_temp/$(downloadFirebaseJson.secureFileName)"
+2025-06-05T15:44:33.6632928Z +                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2025-06-05T15:44:33.6633521Z     + CategoryInfo          : ObjectNotFound: (downloadFirebaseJson.secureFileName:String) [], ParentContainsErrorReco 
+2025-06-05T15:44:33.6633864Z    rdException
+2025-06-05T15:44:33.6634535Z     + FullyQualifiedErrorId : CommandNotFoundException
+2025-06-05T15:44:33.6634994Z  
+2025-06-05T15:44:33.8220250Z ##[error]PowerShell exited with code '1'.
+2025-06-05T15:44:33.8938109Z ##[section]Finishing: Distribute AAB with Firebase CLI (Service Account)
+
+
