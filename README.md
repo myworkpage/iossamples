@@ -412,3 +412,40 @@ Result: False
 Evaluating: SucceededNode()
 Result: False
 
+
+
+
+
+- task: PowerShell@2
+  displayName: 'Distribute AAB via Firebase REST API'
+  inputs:
+    targetType: 'inline'
+    script: |
+      $jsonPath = "$(Agent.TempDirectory)\$(downloadFirebaseJson.secureFileName)"
+      Write-Host "Using service account: $jsonPath"
+
+      $env:Path += ";C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin"
+      gcloud auth activate-service-account --key-file="$jsonPath"
+      
+      $accessToken = gcloud auth print-access-token
+
+      $aabFile = Get-ChildItem "$(Build.ArtifactStagingDirectory)\UAT\*-Signed.aab" | Select-Object -First 1
+      if (-not $aabFile) {
+        Write-Error "❌ No signed AAB file found."
+        exit 1
+      }
+
+      $headers = @{
+        "Authorization" = "Bearer $accessToken"
+        "X-Goog-Upload-Protocol" = "raw"
+        "X-Goog-Upload-File-Name" = "$($aabFile.Name)"
+        "Content-Type" = "application/octet-stream"
+      }
+
+      $uri = "https://firebaseappdistribution.googleapis.com/v1/projects/-/apps/$(FirebaseAppId_UAT)/releases:upload"
+      $response = Invoke-RestMethod -Uri $uri -Method POST -Headers $headers -InFile $aabFile.FullName
+
+      Write-Output "✅ Uploaded to Firebase: $($response.name)"
+  env:
+    FirebaseAppId_UAT: $(FirebaseAppId_UAT)
+
