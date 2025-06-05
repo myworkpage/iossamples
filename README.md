@@ -366,3 +366,49 @@ Result: False
       env:
         FirebaseAppId_UAT: "$(FirebaseAppId_UAT)"
 
+
+
+
+
+        Task         : PowerShell
+2025-06-05T19:08:10.6166303Z Description  : Run a PowerShell script on Linux, macOS, or Windows
+2025-06-05T19:08:10.6166405Z Version      : 2.247.1
+2025-06-05T19:08:10.6166542Z Author       : Microsoft Corporation
+2025-06-05T19:08:10.6166627Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/powershell
+2025-06-05T19:08:10.6166755Z ==============================================================================
+2025-06-05T19:08:12.4855531Z Generating script.
+2025-06-05T19:08:12.5777578Z ========================== Starting Command Output ===========================
+2025-06-05T19:08:12.6108045Z ##[command]"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command ". 'D:\a\_temp\66563948-3f55-4c49-9e6e-578f491c6691.ps1'"
+2025-06-05T19:12:05.9173117Z Google Cloud SDK 525.0.0
+2025-06-05T19:12:05.9174154Z bq 2.1.17
+2025-06-05T19:12:05.9174532Z core 2025.05.30
+2025-06-05T19:12:05.9174819Z gcloud-crc32c 1.0.0
+2025-06-05T19:12:05.9175112Z gsutil 5.34
+2025-06-05T19:12:06.2632158Z ##[section]Finishing: Install Google Cloud SDK
+2025-06-05T19:12:06.2690748Z ##[section]Starting: Distribute AAB via Firebase REST API
+2025-06-05T19:12:06.2708697Z ==============================================================================
+2025-06-05T19:12:06.2708858Z Task         : PowerShell
+2025-06-05T19:12:06.2708927Z Description  : Run a PowerShell script on Linux, macOS, or Windows
+2025-06-05T19:12:06.2709029Z Version      : 2.247.1
+2025-06-05T19:12:06.2709145Z Author       : Microsoft Corporation
+2025-06-05T19:12:06.2709224Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/powershell
+2025-06-05T19:12:06.2709356Z ==============================================================================
+2025-06-05T19:12:07.6855442Z Generating script.
+2025-06-05T19:12:07.7414420Z ========================== Starting Command Output ===========================
+2025-06-05T19:12:07.7750911Z ##[command]"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command ". 'D:\a\_temp\a39c370b-7085-4f8c-b833-66071e052e9a.ps1'"
+2025-06-05T19:12:09.0148857Z downloadFirebaseJson.secureFileName : The term 'downloadFirebaseJson.secureFileName' is not recognized as the name of 
+2025-06-05T19:12:09.0150224Z a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, 
+2025-06-05T19:12:09.0151812Z verify that the path is correct and try again.
+2025-06-05T19:12:09.0152270Z At D:\a\_temp\a39c370b-7085-4f8c-b833-66071e052e9a.ps1:4 char:27
+2025-06-05T19:12:09.0152706Z + $jsonPath = "D:\a\_temp\$(downloadFirebaseJson.secureFileName)"
+2025-06-05T19:12:09.0153143Z +                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2025-06-05T19:12:09.0153585Z     + CategoryInfo          : ObjectNotFound: (downloadFirebaseJson.secureFileName:String) [], ParentContainsErrorReco 
+2025-06-05T19:12:09.0154185Z    rdException
+2025-06-05T19:12:09.0154565Z     + FullyQualifiedErrorId : CommandNotFoundException
+2025-06-05T19:12:09.0155183Z  
+2025-06-05T19:12:09.2047711Z ##[error]PowerShell exited with code '1'.
+2025-06-05T19:12:09.2630367Z ##[section]Finishing: Distribute AAB via Firebase REST API
+2025-06-05T19:12:09.2667192Z Skipping step due to condition evaluation.
+Evaluating: SucceededNode()
+Result: False
+
