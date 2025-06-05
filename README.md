@@ -316,3 +316,53 @@ Installing Firebase CLI...
 Evaluating: SucceededNode()
 Result: False
 
+
+
+
+# 🔐 Download the service account JSON
+    - task: DownloadSecureFile@1
+      name: downloadFirebaseJson
+      displayName: 'Download Firebase Service Account JSON'
+      inputs:
+        secureFile: 'firebase-uat-service-account.json'
+
+    # 🛠️ Install Google Cloud SDK
+    - powershell: |
+        Invoke-WebRequest -Uri "https://dl.google.com/dl/cloudsdk/channels/rapid/GoogleCloudSDKInstaller.exe" -OutFile "gcloud_installer.exe"
+        Start-Process .\gcloud_installer.exe -Wait -ArgumentList "/S"
+        $env:Path += ";C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin"
+        gcloud --version
+      displayName: 'Install Google Cloud SDK'
+
+    # 🚀 Use REST API to upload AAB to Firebase
+    - powershell: |
+        $jsonPath = "$(Agent.TempDirectory)\$(downloadFirebaseJson.secureFileName)"
+        $env:Path += ";C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin"
+
+        Write-Host "Activating service account..."
+        gcloud auth activate-service-account --key-file="$jsonPath"
+
+        $accessToken = gcloud auth print-access-token
+
+        $aabFile = Get-ChildItem "$(Build.ArtifactStagingDirectory)\UAT\*-Signed.aab" | Select-Object -First 1
+        if (-not $aabFile) {
+          Write-Error "❌ No signed AAB file found."
+          exit 1
+        }
+
+        Write-Host "Uploading AAB to Firebase App Distribution..."
+        $uri = "https://firebaseappdistribution.googleapis.com/v1/projects/-/apps/$(FirebaseAppId_UAT)/releases:upload"
+
+        $headers = @{
+          "Authorization" = "Bearer $accessToken"
+          "X-Goog-Upload-Protocol" = "raw"
+          "X-Goog-Upload-File-Name" = "$($aabFile.Name)"
+          "Content-Type" = "application/octet-stream"
+        }
+
+        $response = Invoke-RestMethod -Uri $uri -Method POST -Headers $headers -InFile $aabFile.FullName
+        Write-Output "✅ Uploaded: $($response.name)"
+      displayName: 'Distribute AAB via Firebase REST API'
+      env:
+        FirebaseAppId_UAT: "$(FirebaseAppId_UAT)"
+
