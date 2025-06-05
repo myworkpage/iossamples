@@ -271,3 +271,33 @@ Z Installing
 2025-06-05T15:44:33.8938109Z ##[section]Finishing: Distribute AAB with Firebase CLI (Service Account)
 
 
+
+
+- task: PowerShell@2
+  displayName: 'Distribute AAB with Firebase CLI (Service Account)'
+  inputs:
+    targetType: 'inline'
+    script: |
+      echo "Installing Firebase CLI..."
+      npm install -g firebase-tools
+
+      echo "Using GOOGLE_APPLICATION_CREDENTIALS: $env:GOOGLE_APPLICATION_CREDENTIALS"
+
+      echo "Checking for AAB file in: $(Build.ArtifactStagingDirectory)\UAT"
+      $aabPath = Get-ChildItem "$(Build.ArtifactStagingDirectory)\UAT\*-Signed.aab" | Select-Object -First 1
+
+      if ($null -eq $aabPath) {
+        Write-Error "❌ No signed AAB file found to distribute."
+        exit 1
+      }
+
+      echo "Distributing to Firebase App Distribution..."
+      firebase appdistribution:distribute "$($aabPath.FullName)" `
+        --app "$env:FirebaseAppId_UAT" `
+        --groups uat_qa
+  env:
+    GOOGLE_APPLICATION_CREDENTIALS: "$(Agent.TempDirectory)/firebase-uat-service-account.json"
+    FirebaseAppId_UAT: "$(FirebaseAppId_UAT)"
+
+
+
