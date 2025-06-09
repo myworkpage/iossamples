@@ -1,0 +1,49 @@
+5-06-05T19:55:31.1835875Z ##[section]Finishing: Build Android UAT Project
+2025-06-05T19:55:31.1896967Z ##[section]Starting: Copy AAB to Staging
+2025-06-05T19:55:31.1912596Z ==============================================================================
+2025-06-05T19:55:31.1912765Z Task         : Copy files
+2025-06-05T19:55:31.1912844Z Description  : Copy files from a source folder to a target folder using patterns matching file paths (not folder paths)
+2025-06-05T19:55:31.1913005Z Version      : 2.246.0
+2025-06-05T19:55:31.1913092Z Author       : Microsoft Corporation
+2025-06-05T19:55:31.1913181Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/copy-files
+2025-06-05T19:55:31.1913318Z ==============================================================================
+2025-06-05T19:55:34.7607142Z found 1 files
+2025-06-05T19:55:34.7650032Z Copying D:\a\1\s\src\app\Bcbsla.Mobile.App.Droid\bin\Release_Test\net9.0-android35.0\com.bcbsla.mobile.droid-Signed.aab to D:\a\1\a\UAT\com.bcbsla.mobile.droid-Signed.aab
+2025-06-05T19:55:34.8604538Z ##[section]Finishing: Copy AAB to Staging
+2025-06-05T19:55:34.8637118Z ##[section]Starting: Install Node.js
+2025-06-05T19:55:34.8649537Z ==============================================================================
+2025-06-05T19:55:34.8649699Z Task         : Node.js tool installer
+2025-06-05T19:55:34.8649792Z Description  : Finds or downloads and caches the specified version spec of Node.js and adds it to the PATH
+2025-06-05T19:55:34.8649956Z Version      : 0.247.1
+2025-06-05T19:55:34.8650035Z Author       : Microsoft Corporation
+2025-06-05T19:55:34.8650139Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/tool/node-js
+2025-06-05T19:55:34.8650266Z ==============================================================================
+2025-06-05T19:55:35.2965548Z Found tool in cache: node 20.19.2 x64
+2025-06-05T19:55:35.2972874Z Prepending PATH environment variable with directory: C:\hostedtoolcache\windows\node\20.19.2\x64
+2025-06-05T19:55:35.3324164Z ##[section]Finishing: Install Node.js
+2025-06-05T19:55:35.3356110Z ##[section]Starting: Distribute AAB via Firebase REST API
+2025-06-05T19:55:35.3372237Z ==============================================================================
+2025-06-05T19:55:35.3372410Z Task         : PowerShell
+2025-06-05T19:55:35.3372488Z Description  : Run a PowerShell script on Linux, macOS, or Windows
+2025-06-05T19:55:35.3372607Z Version      : 2.247.1
+2025-06-05T19:55:35.3372705Z Author       : Microsoft Corporation
+2025-06-05T19:55:35.3372796Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/powershell
+2025-06-05T19:55:35.3372936Z ==============================================================================
+2025-06-05T19:55:37.0937697Z Generating script.
+2025-06-05T19:55:37.2750936Z ========================== Starting Command Output ===========================
+2025-06-05T19:55:37.3055763Z ##[command]"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command ". 'D:\a\_temp\ee6c54b3-8445-4df0-9163-70e11fe0744a.ps1'"
+2025-06-05T19:55:37.9285565Z downloadFirebaseJson.secureFileName : The term 'downloadFirebaseJson.secureFileName' is not recognized as the name of 
+2025-06-05T19:55:37.9286220Z a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, 
+2025-06-05T19:55:37.9286944Z verify that the path is correct and try again.
+2025-06-05T19:55:37.9287472Z At D:\a\_temp\ee6c54b3-8445-4df0-9163-70e11fe0744a.ps1:4 char:27
+2025-06-05T19:55:37.9288979Z + $jsonPath = "D:\a\_temp\$(downloadFirebaseJson.secureFileName)"
+2025-06-05T19:55:37.9289302Z +                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2025-06-05T19:55:37.9289914Z     + CategoryInfo          : ObjectNotFound: (downloadFirebaseJson.secureFileName:String) [], ParentContainsErrorReco 
+2025-06-05T19:55:37.9290349Z    rdException
+2025-06-05T19:55:37.9290947Z     + FullyQualifiedErrorId : CommandNotFoundException
+2025-06-05T19:55:37.9291389Z  
+2025-06-05T19:55:38.0931582Z ##[error]PowerShell exited with code '1'.
+2025-06-05T19:55:38.1537133Z ##[section]Finishing: Distribute AAB via Firebase REST API
+2025-06-05T19:55:38.1571504Z Skipping step due to condition evaluation.
+Evaluating: SucceededNode()
+Result: False
