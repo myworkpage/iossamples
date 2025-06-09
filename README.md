@@ -449,3 +449,25 @@ Result: False
   env:
     FirebaseAppId_UAT: $(FirebaseAppId_UAT)
 
+
+
+
+
+
+
+   ##[command]"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command ". 'D:\a\_temp\1dcabb97-d01e-471b-a59d-a99be4ef95f6.ps1'"
+2025-06-09T19:13:27.8864190Z Using service account: D:\a\_temp\android-firebase-uat.json
+2025-06-09T19:13:28.5352530Z gcloud : The term 'gcloud' is not recognized as the name of a cmdlet, function, script file, or operable program. 
+2025-06-09T19:13:28.5353387Z Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+2025-06-09T19:13:28.5354085Z At D:\a\_temp\1dcabb97-d01e-471b-a59d-a99be4ef95f6.ps1:8 char:1
+2025-06-09T19:13:28.5354986Z + gcloud auth activate-service-account --key-file="$jsonPath"
+2025-06-09T19:13:28.5355624Z + ~~~~~~
+2025-06-09T19:13:28.5358054Z     + CategoryInfo          : ObjectNotFound: (gcloud:String) [], ParentContainsErrorRecordException
+2025-06-09T19:13:28.5358934Z     + FullyQualifiedErrorId : CommandNotFoundException
+2025-06-09T19:13:28.5359356Z  
+2025-06-09T19:13:28.6678681Z ##[error]PowerShell exited with code '1'.
+2025-06-09T19:13:28.7252370Z ##[section]Finishing: Distribute AAB via Firebase REST API
+2025-06-09T19:13:28.7287770Z Skipping step due to condition evaluation.
+Evaluating: SucceededNode()
+Result: False
+
