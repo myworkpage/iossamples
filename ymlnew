@@ -1,0 +1,162 @@
+trigger:
+  branches:
+    include:
+      - master
+      - feat/*
+  paths:
+    include:
+      - src/app/*
+    exclude:
+      - src/api/*
+
+jobs:
+  - job: Android_Uat
+    displayName: 'Build and Distribute Android UAT'
+    pool:
+      vmImage: 'windows-latest'
+
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        displayName: 'Use .NET from global.json'
+        useGlobalJson: true
+
+    - task: CmdLine@2
+      displayName: 'Install MAUI Workload'
+      inputs:
+        script: 'dotnet workload install maui'
+
+    - task: DeleteFiles@1
+      inputs:
+        SourceFolder: '$(agent.builddirectory)'
+        Contents: '/src/api/*'
+        RemoveSourceFolder: true
+
+    - task: JavaToolInstaller@0
+      inputs:
+        versionSpec: '11'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Build Android UAT Project'
+      inputs:
+        command: 'build'
+        projects: 'src/app/Bcbsla.Mobile.App.Droid/Bcbsla.Mobile.App.Droid.csproj'
+        arguments: '-c Release_Test -f:net9.0-android35.0'
+
+    - task: CopyFiles@2
+      displayName: 'Copy AAB to Staging'
+      inputs:
+        SourceFolder: '$(agent.builddirectory)'
+        Contents: '**/*-Signed.aab'
+        TargetFolder: '$(build.artifactstagingdirectory)/UAT'
+        flattenFolders: true
+
+    - task: NodeTool@0
+      displayName: 'Install Node.js'
+      inputs:
+        versionSpec: '20.x'
+
+    - task: DownloadSecureFile@1
+      name: downloadFirebaseJson
+      displayName: 'Download Firebase Service Account JSON'
+      inputs:
+        secureFile: 'android-firebase-uat.json'
+
+    - task: PowerShell@2
+      displayName: 'Distribute AAB via Firebase REST API'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $jsonPath = "$(Agent.TempDirectory)\$(downloadFirebaseJson.secureFileName)"
+          Write-Host "Using service account: $jsonPath"
+
+          $env:Path += ";C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin"
+          gcloud auth activate-service-account --key-file="$jsonPath"
+          
+          $accessToken = gcloud auth print-access-token
+
+          $aabFile = Get-ChildItem "$(Build.ArtifactStagingDirectory)\UAT\*-Signed.aab" | Select-Object -First 1
+          if (-not $aabFile) {
+            Write-Error "❌ No signed AAB file found."
+            exit 1
+          }
+
+          $headers = @{
+            "Authorization" = "Bearer $accessToken"
+            "X-Goog-Upload-Protocol" = "raw"
+            "X-Goog-Upload-File-Name" = "$($aabFile.Name)"
+            "Content-Type" = "application/octet-stream"
+          }
+
+          $uri = "https://firebaseappdistribution.googleapis.com/v1/projects/-/apps/$(FirebaseAppId_UAT)/releases:upload"
+          $response = Invoke-RestMethod -Uri $uri -Method POST -Headers $headers -InFile $aabFile.FullName
+
+          Write-Output "✅ Uploaded to Firebase: $($response.name)"
+      env:
+        FirebaseAppId_UAT: $(FirebaseAppId_UAT)
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish UAT Artifacts'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/UAT'
+        ArtifactName: 'drop_uat'
+        publishLocation: 'Container'
+
+  - job: Android_Prod
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+
+    - task: UseDotNet@2
+      inputs:
+        displayName: 'Use version of .NET in global.json'
+        useGlobalJson: true
+
+    - task: CmdLine@2
+      inputs:
+        script: 'dotnet workload install maui'
+
+    - task: DeleteFiles@1
+      inputs:
+        SourceFolder: '$(agent.builddirectory)'
+        Contents: '/src/api/*'
+        RemoveSourceFolder: true
+
+    - task: CmdLine@2
+      displayName: 'Swap google-services json files'
+      inputs:
+        script: 'mv src/app/Bcbsla.Mobile.App.Droid/google-services.Prod.json src/app/Bcbsla.Mobile.App.Droid/google-services.json'            
+
+    - task: CmdLine@2
+      displayName: 'Swap strings.xml files'
+      inputs:
+        script: 'mv src/app/Bcbsla.Mobile.App.Droid/Resources/values/strings.Prod.xml src/app/Bcbsla.Mobile.App.Droid/Resources/values/strings.xml'  
+
+    - task: JavaToolInstaller@0
+      inputs:
+        versionSpec: '11'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'build'
+        projects: 'src/app/Bcbsla.Mobile.App.Droid/Bcbsla.Mobile.App.Droid.csproj'
+        arguments: '-c Release_GooglePlay -f:net9.0-android35.0 -p:AndroidSigningKeyPass=$(KeystorePassword) -p:AndroidSigningStorePass=$(KeystorePassword)'
+
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: '$(agent.builddirectory)'
+        Contents: '**/*-Signed.aab'
+        TargetFolder: '$(build.artifactstagingdirectory)/PROD'
+        flattenFolders: true
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/PROD'
+        ArtifactName: 'drop_prod'
+        publishLocation: 'Container'
+
+
