@@ -217,3 +217,15 @@ try {
   Write-Error "`n❌ Token request failed: $_"
 }
 
+
+
+$jwt = "$([string]$toSign).$([string]$signatureEncoded)"
+
+
+
+$jwt | Out-File -FilePath "./jwt.txt" -Encoding ascii
+Write-Host "📝 Full JWT written to jwt.txt"
+
+
+Write-Host "JWT length: $($jwt.Length)"
+
