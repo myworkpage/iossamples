@@ -1,111 +1,41 @@
-trigger:
-  branches:
-    include:
-      - master
-      - feat/*
-  paths:
-    include:
-      - src/app/*
-    exclude:
-      - src/api/*
+$creds = Get-Content './android-firebase-uat.json' | ConvertFrom-Json
 
-jobs:
-  - job: Android_Uat
-    pool:
-      vmImage: 'windows-latest'
-    steps:
-    
-    - task: UseDotNet@2
-      inputs:
-        displayName: 'Use version of .NET in global.json'
-        useGlobalJson: true
+$header = @{ alg = 'RS256'; typ = 'JWT' } | ConvertTo-Json -Compress
+$now = [int][double]::Parse((Get-Date -UFormat %s))
+$exp = $now + 3600
+$payload = @{
+  iss = $creds.client_email
+  scope = 'https://www.googleapis.com/auth/cloud-platform'
+  aud = 'https://oauth2.googleapis.com/token'
+  iat = $now
+  exp = $exp
+} | ConvertTo-Json -Compress
 
-    - task: CmdLine@2
-      inputs:
-        script: 'dotnet workload install maui'
+function Base64UrlEncode([string]$input) {
+  [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($input)).TrimEnd('=').Replace('+','-').Replace('/','_')
+}
 
-    - task: DeleteFiles@1
-      inputs:
-        SourceFolder: '$(agent.builddirectory)'
-        Contents: '/src/api/*'
-        RemoveSourceFolder: true
+$headerEncoded = Base64UrlEncode $header
+$payloadEncoded = Base64UrlEncode $payload
+$toSign = "$headerEncoded.$payloadEncoded"
 
-    - task: JavaToolInstaller@0
-      inputs:
-        versionSpec: '11'
-        jdkArchitectureOption: 'x64'
-        jdkSourceOption: 'PreInstalled'
+# Key decode
+$key = ($creds.private_key -join "`n") -replace '-----.*?-----', '' -replace '\s+', ''
+$bytes = [Convert]::FromBase64String($key)
 
-    - task: DotNetCoreCLI@2
-      inputs:
-        command: 'build'
-        projects: 'src/app/Bcbsla.Mobile.App.Droid/Bcbsla.Mobile.App.Droid.csproj'
-        arguments: '-c Release_Test -f:net9.0-android35.0'
+$rsa = [System.Security.Cryptography.RSA]::Create()
+[int]$bytesRead = 0
+$rsa.ImportPkcs8PrivateKey($bytes, [ref]$bytesRead)
 
-    - task: CopyFiles@2
-      inputs:
-        SourceFolder: '$(agent.builddirectory)'
-        Contents: '**/*-Signed.aab'
-        TargetFolder: '$(build.artifactstagingdirectory)/UAT'
-        flattenFolders: true
+# Sign
+$signature = $rsa.SignData(
+  [System.Text.Encoding]::UTF8.GetBytes($toSign),
+  [System.Security.Cryptography.HashAlgorithmName]::SHA256,
+  [System.Security.Cryptography.RSASignaturePadding]::Pkcs1
+)
 
-    - task: PublishBuildArtifacts@1
-      inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)/UAT'
-        ArtifactName: 'drop_uat'
-        publishLocation: 'Container'
+$signatureEncoded = [Convert]::ToBase64String($signature).TrimEnd('=').Replace('+','-').Replace('/','_')
+$jwt = "$toSign.$signatureEncoded"
 
-  - job: Android_Prod
-    pool:
-      vmImage: 'windows-latest'
-    steps:
-
-    - task: UseDotNet@2
-      inputs:
-        displayName: 'Use version of .NET in global.json'
-        useGlobalJson: true
-
-    - task: CmdLine@2
-      inputs:
-        script: 'dotnet workload install maui'
-
-    - task: DeleteFiles@1
-      inputs:
-        SourceFolder: '$(agent.builddirectory)'
-        Contents: '/src/api/*'
-        RemoveSourceFolder: true
-
-    - task: CmdLine@2
-      displayName: 'Swap google-services json files'
-      inputs:
-        script: 'mv src/app/Bcbsla.Mobile.App.Droid/google-services.Prod.json src/app/Bcbsla.Mobile.App.Droid/google-services.json'            
-
-    - task: CmdLine@2
-      displayName: 'Swap strings.xml files'
-      inputs:
-        script: 'mv src/app/Bcbsla.Mobile.App.Droid/Resources/values/strings.Prod.xml src/app/Bcbsla.Mobile.App.Droid/Resources/values/strings.xml'  
-
-    - task: JavaToolInstaller@0
-      inputs:
-        versionSpec: '11'
-        jdkArchitectureOption: 'x64'
-        jdkSourceOption: 'PreInstalled'
-
-    - task: DotNetCoreCLI@2
-      inputs:
-        command: 'build'
-        projects: 'src/app/Bcbsla.Mobile.App.Droid/Bcbsla.Mobile.App.Droid.csproj'
-        arguments: '-c Release_GooglePlay -f:net9.0-android35.0 -p:AndroidSigningKeyPass=$(KeystorePassword) -p:AndroidSigningStorePass=$(KeystorePassword)'
-
-    - task: CopyFiles@2
-      inputs:
-        SourceFolder: '$(agent.builddirectory)'
-        Contents: '**/*-Signed.aab'
-        TargetFolder: '$(build.artifactstagingdirectory)/PROD'
-        flattenFolders: true
-
-    - task: PublishBuildArtifacts@1
-      inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)/PROD'
-        ArtifactName: 'drop_prod'
-        publishLocation: 'Container'
+Write-Host "`n✅ JWT:"
+Write-Host $jwt
