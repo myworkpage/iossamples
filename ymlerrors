@@ -47,3 +47,29 @@
 2025-06-05T19:55:38.1571504Z Skipping step due to condition evaluation.
 Evaluating: SucceededNode()
 Result: False
+
+
+
+
+2025-06-10T13:05:53.8190034Z ##[section]Starting: Distribute AAB via Firebase REST API (No gcloud)
+2025-06-10T13:05:53.8203040Z ==============================================================================
+2025-06-10T13:05:53.8203205Z Task         : PowerShell
+2025-06-10T13:05:53.8203270Z Description  : Run a PowerShell script on Linux, macOS, or Windows
+2025-06-10T13:05:53.8203380Z Version      : 2.247.1
+2025-06-10T13:05:53.8204257Z Author       : Microsoft Corporation
+2025-06-10T13:05:53.8204342Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/powershell
+2025-06-10T13:05:53.8204470Z ==============================================================================
+2025-06-10T13:05:55.3719245Z Generating script.
+2025-06-10T13:05:55.5650394Z ========================== Starting Command Output ===========================
+2025-06-10T13:05:55.5923930Z ##[command]"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command ". 'D:\a\_temp\66d3ca53-c356-49c6-be87-02a9fd869c8c.ps1'"
+2025-06-10T13:05:55.9286781Z Using service account file: D:\a\_temp\android-firebase-uat.json
+2025-06-10T13:05:56.6326116Z Method invocation failed because [System.Security.Cryptography.RSACryptoServiceProvider] does not contain a method 
+2025-06-10T13:05:56.6326662Z named 'ImportRSAPrivateKey'.
+2025-06-10T13:05:56.6327306Z At D:\a\_temp\66d3ca53-c356-49c6-be87-02a9fd869c8c.ps1:37 char:1
+2025-06-10T13:05:56.6328760Z + $rsa.ImportRSAPrivateKey($privateKey, [ref]0)
+2025-06-10T13:05:56.6329478Z + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2025-06-10T13:05:56.6329961Z     + CategoryInfo          : InvalidOperation: (:) [], ParentContainsErrorRecordException
+2025-06-10T13:05:56.6330334Z     + FullyQualifiedErrorId : MethodNotFound
+2025-06-10T13:05:56.6330664Z  
+2025-06-10T13:05:56.7442086Z ##[error]PowerShell exited with code '1'.
+2025-06-10T13:05:56.7916860Z ##[section]Finishing: Distribute AAB via Firebase REST API (No gcloud)
