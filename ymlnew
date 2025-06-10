@@ -65,18 +65,58 @@ jobs:
         secureFile: 'android-firebase-uat.json'
 
     - task: PowerShell@2
-      displayName: 'Distribute AAB via Firebase REST API'
+      displayName: 'Distribute AAB via Firebase REST API (No gcloud)'
       inputs:
         targetType: 'inline'
         script: |
           $jsonPath = "$(downloadFirebaseJson.secureFilePath)"
-          Write-Host "Using service account: $jsonPath"
+          Write-Host "Using service account file: $jsonPath"
     
-          $env:Path += ";C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin"
-          gcloud auth activate-service-account --key-file="$jsonPath"
-          
-          $accessToken = gcloud auth print-access-token
+          # Load credentials from JSON
+          $creds = Get-Content $jsonPath | ConvertFrom-Json
+          $jwtHeader = @{ alg = "RS256"; typ = "JWT" } | ConvertTo-Json -Compress
+          $now = [int][double]::Parse((Get-Date -UFormat %s))
+          $exp = $now + 3600
     
+          $jwtClaimSet = @{
+            iss = $creds.client_email
+            scope = "https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/firebase"
+            aud = $creds.token_uri
+            exp = $exp
+            iat = $now
+          } | ConvertTo-Json -Compress
+    
+          function Base64UrlEncode([string]$input) {
+            [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($input)).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+          }
+    
+          $headerEncoded = Base64UrlEncode $jwtHeader
+          $claimsEncoded = Base64UrlEncode $jwtClaimSet
+          $toSign = "$headerEncoded.$claimsEncoded"
+    
+          # Write payload to temp file
+          $toSignPath = "$env:TEMP\toSign.bytes"
+          Set-Content -Path $toSignPath -Value $toSign -Encoding UTF8
+    
+          # Sign using private key
+          $privateKeyPem = $creds.private_key -replace '-----.*?-----', '' -replace '\s+', ''
+          $privateKey = [Convert]::FromBase64String($privateKeyPem)
+          $rsa = [System.Security.Cryptography.RSA]::Create()
+          $rsa.ImportRSAPrivateKey($privateKey, [ref]0)
+          $signature = $rsa.SignData([System.Text.Encoding]::UTF8.GetBytes($toSign), [System.Security.Cryptography.HashAlgorithmName]::SHA256, [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
+          $signatureEncoded = [Convert]::ToBase64String($signature).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+    
+          $jwt = "$toSign.$signatureEncoded"
+    
+          # Get access token
+          $tokenResponse = Invoke-RestMethod -Method Post -Uri $creds.token_uri -ContentType 'application/x-www-form-urlencoded' -Body @{
+            grant_type = 'urn:ietf:params:oauth:grant-type:jwt-bearer'
+            assertion = $jwt
+          }
+    
+          $accessToken = $tokenResponse.access_token
+    
+          # Upload AAB
           $aabFile = Get-ChildItem "$(Build.ArtifactStagingDirectory)\UAT\*-Signed.aab" | Select-Object -First 1
           if (-not $aabFile) {
             Write-Error "❌ No signed AAB file found."
