@@ -212,3 +212,36 @@ try {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+# 1. Extract & decode PKCS#8 key
+$rawPem = $creds.private_key
+$cleanKey = $rawPem -replace '-----BEGIN PRIVATE KEY-----', '' `
+                      -replace '-----END PRIVATE KEY-----', '' `
+                      -replace '\s+', ''
+$privateKey = [Convert]::FromBase64String($cleanKey)
+
+# 2. Sign the JWT using ImportPkcs8PrivateKey
+$rsa = [System.Security.Cryptography.RSA]::Create()
+[int]$bytesRead = 0
+$rsa.ImportPkcs8PrivateKey($privateKey, [ref]$bytesRead)
+
+$toSign = "$headerEncoded.$claimsEncoded"
+$signature = $rsa.SignData(
+    [System.Text.Encoding]::UTF8.GetBytes($toSign),
+    [System.Security.Cryptography.HashAlgorithmName]::SHA256,
+    [System.Security.Cryptography.RSASignaturePadding]::Pkcs1
+)
+$signatureEncoded = [Convert]::ToBase64String($signature).TrimEnd('=').Replace('+','-').Replace('/','_')
+$jwt = "$toSign.$signatureEncoded"
+
