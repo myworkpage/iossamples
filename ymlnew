@@ -72,85 +72,94 @@ jobs:
         script: |
           Write-Host "PowerShell version in use:"
           $PSVersionTable
-    
+
           $jsonPath = "$(downloadFirebaseJson.secureFilePath)"
           Write-Host "Using service account file: $jsonPath"
-    
+
           $creds = Get-Content $jsonPath | ConvertFrom-Json
-    
+
           $jwtHeader = @{ alg = "RS256"; typ = "JWT" } | ConvertTo-Json -Compress
           $now = [int][double]::Parse((Get-Date -UFormat %s))
           $exp = $now + 3600
-    
+
+          $audience = "https://oauth2.googleapis.com/token"
+
           $jwtClaimSet = @{
             iss   = $creds.client_email
             scope = "https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/firebase"
-            aud   = $creds.token_uri
+            aud   = $audience
             exp   = $exp
             iat   = $now
           } | ConvertTo-Json -Compress
-    
+
           function Base64UrlEncode([string]$input) {
             [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($input)).TrimEnd('=').Replace('+', '-').Replace('/', '_')
           }
-    
+
           $headerEncoded = Base64UrlEncode $jwtHeader
           $claimsEncoded = Base64UrlEncode $jwtClaimSet
           $toSign = "$headerEncoded.$claimsEncoded"
-    
+
           # Convert PEM private key to bytes
           $privateKeyPem = $creds.private_key -replace '-----.*?-----', '' -replace '\s+', ''
           $privateKey = [Convert]::FromBase64String($privateKeyPem)
-          
+
           try {
               $rsa = [System.Security.Cryptography.RSA]::Create()
               [int]$bytesRead = 0
               $bytesReadRef = [ref]$bytesRead
               $rsa.ImportRSAPrivateKey($privateKey, $bytesReadRef)
-          
+
               $signature = $rsa.SignData(
                   [System.Text.Encoding]::UTF8.GetBytes($toSign),
                   [System.Security.Cryptography.HashAlgorithmName]::SHA256,
                   [System.Security.Cryptography.RSASignaturePadding]::Pkcs1
               )
-          
+
               $signatureEncoded = [Convert]::ToBase64String($signature).TrimEnd('=').Replace('+', '-').Replace('/', '_')
               $jwt = "$toSign.$signatureEncoded"
           } catch {
-              Write-Error "Failed to sign JWT: $_"
+              Write-Error "❌ Failed to sign JWT: $_"
               exit 1
           }
-    
+
           # Exchange JWT for access token
-          $tokenResponse = Invoke-RestMethod -Method Post -Uri $creds.token_uri -ContentType 'application/x-www-form-urlencoded' -Body @{
-            grant_type = 'urn:ietf:params:oauth:grant-type:jwt-bearer'
-            assertion  = $jwt
-          }
-    
-          $accessToken = $tokenResponse.access_token
-          if (-not $accessToken) {
-            Write-Error "❌ Failed to retrieve access token."
+          try {
+            $tokenResponse = Invoke-RestMethod -Method Post -Uri $audience -ContentType 'application/x-www-form-urlencoded' -Body @{
+              grant_type = 'urn:ietf:params:oauth:grant-type:jwt-bearer'
+              assertion  = $jwt
+            }
+
+            $accessToken = $tokenResponse.access_token
+            if (-not $accessToken) {
+              Write-Error "❌ Failed to retrieve access token."
+              exit 1
+            }
+
+            Write-Host "✅ Access token acquired."
+          } catch {
+            Write-Error "❌ Token request failed: $_"
             exit 1
           }
-    
+
           # Locate AAB file
           $aabFile = Get-ChildItem "$(Build.ArtifactStagingDirectory)/UAT" -Filter "*-Signed.aab" | Select-Object -First 1
           if (-not $aabFile) {
             Write-Error "❌ No signed AAB file found."
             exit 1
           }
-    
+
           Write-Host "Found AAB: $($aabFile.FullName)"
-    
+
           $headers = @{
             "Authorization"             = "Bearer $accessToken"
             "X-Goog-Upload-Protocol"    = "raw"
             "X-Goog-Upload-File-Name"   = "$($aabFile.Name)"
             "Content-Type"              = "application/octet-stream"
           }
-    
+
           $uri = "https://firebaseappdistribution.googleapis.com/v1/projects/-/apps/$(FirebaseAppId_UAT)/releases:upload"
-    
+
           try {
             $response = Invoke-RestMethod -Uri $uri -Method POST -Headers $headers -InFile $aabFile.FullName
             Write-Host "✅ Uploaded to Firebase: $($response.name)"
