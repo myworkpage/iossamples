@@ -245,3 +245,77 @@ $signature = $rsa.SignData(
 $signatureEncoded = [Convert]::ToBase64String($signature).TrimEnd('=').Replace('+','-').Replace('/','_')
 $jwt = "$toSign.$signatureEncoded"
 
+
+
+
+
+
+$jsonPath = "./android-firebase-uat.json"
+
+Write-Host "🔍 Reading service account from: $jsonPath"
+$creds = Get-Content $jsonPath | ConvertFrom-Json
+
+# JWT Header and Claims
+$jwtHeader = @{ alg = "RS256"; typ = "JWT" } | ConvertTo-Json -Compress
+$now = [int][double]::Parse((Get-Date -UFormat %s))
+$exp = $now + 3600
+$scope = "https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/firebase"
+$audience = "https://oauth2.googleapis.com/token"
+
+$jwtClaimSet = @{
+  iss   = $creds.client_email
+  scope = $scope
+  aud   = $audience
+  exp   = $exp
+  iat   = $now
+} | ConvertTo-Json -Compress
+
+function Base64UrlEncode([string]$input) {
+  [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($input)).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+}
+
+$headerEncoded = Base64UrlEncode $jwtHeader
+$claimsEncoded = Base64UrlEncode $jwtClaimSet
+$toSign = "$headerEncoded.$claimsEncoded"
+
+# Extract private key (PKCS#8)
+$privateKeyPem = ($creds.private_key -join "`n") -replace '-----.*?-----', '' -replace '\s+', ''
+$privateKey = [Convert]::FromBase64String($privateKeyPem)
+
+try {
+  $rsa = [System.Security.Cryptography.RSA]::Create()
+  [int]$bytesRead = 0
+  $rsa.ImportPkcs8PrivateKey($privateKey, [ref]$bytesRead)  # ✅ FIXED here
+
+  $signature = $rsa.SignData(
+    [System.Text.Encoding]::UTF8.GetBytes($toSign),
+    [System.Security.Cryptography.HashAlgorithmName]::SHA256,
+    [System.Security.Cryptography.RSASignaturePadding]::Pkcs1
+  )
+
+  $signatureEncoded = [Convert]::ToBase64String($signature).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+  $jwt = "$toSign.$signatureEncoded"
+} catch {
+  Write-Error "❌ Failed to sign JWT: $_"
+  exit 1
+}
+
+Write-Host "`n🧾 JWT (first 100 chars):"
+Write-Host $jwt.Substring(0, 100) "... (truncated)"
+$jwt | Set-Content -Path "./jwt.txt" -Encoding ascii
+Write-Host "`n📝 Full JWT written to jwt.txt"
+
+try {
+  $response = Invoke-RestMethod -Method Post -Uri $audience -ContentType 'application/x-www-form-urlencoded' -Body @{
+    grant_type = 'urn:ietf:params:oauth:grant-type:jwt-bearer'
+    assertion  = $jwt
+  }
+
+  Write-Host "`n✅ Access token received:"
+  Write-Host $response.access_token
+} catch {
+  Write-Error "`n❌ Token request failed:"
+  Write-Host ($_ | ConvertTo-Json -Depth 5)
+}
+
+
