@@ -67,6 +67,7 @@ jobs:
     - task: PowerShell@2
       displayName: 'Distribute AAB via Firebase REST API (No gcloud)'
       inputs:
+        pwsh: true
         targetType: 'inline'
         script: |
           $jsonPath = "$(downloadFirebaseJson.secureFilePath)"
@@ -198,5 +199,4 @@ jobs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)/PROD'
         ArtifactName: 'drop_prod'
         publishLocation: 'Container'
-
 
