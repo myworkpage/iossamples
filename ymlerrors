@@ -229,3 +229,45 @@ Write-Host "📝 Full JWT written to jwt.txt"
 
 Write-Host "JWT length: $($jwt.Length)"
 
+
+
+
+
+
+
+
+# -- Build the data to sign --
+$headerEncoded = Base64UrlEncode $jwtHeader
+$claimsEncoded = Base64UrlEncode $jwtClaimSet
+$toSign = "$headerEncoded.$claimsEncoded"
+
+# -- Decode private key --
+$privateKeyPem = $creds.private_key -replace '-----.*?-----', '' -replace '\s+', ''
+$privateKey = [Convert]::FromBase64String($privateKeyPem)
+
+# -- Sign the JWT --
+$rsa = [System.Security.Cryptography.RSA]::Create()
+[int]$bytesRead = 0
+$rsa.ImportRSAPrivateKey($privateKey, [ref]$bytesRead)
+
+$toSignBytes = [System.Text.Encoding]::UTF8.GetBytes($toSign)
+
+$signature = $rsa.SignData(
+    $toSignBytes,
+    [System.Security.Cryptography.HashAlgorithmName]::SHA256,
+    [System.Security.Cryptography.RSASignaturePadding]::Pkcs1
+)
+
+# -- Base64url encode the signature --
+$signatureEncoded = [Convert]::ToBase64String($signature).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+
+# -- Construct the final JWT string --
+$jwt = "$headerEncoded.$claimsEncoded.$signatureEncoded"
+
+# -- Output to verify --
+Write-Host "`n🧾 JWT prepared:"
+Write-Host $jwt.Substring(0, 80) "... (truncated)"
+
+# -- Optional: Write full token to file for inspection --
+$jwt | Out-File -FilePath "./jwt.txt" -Encoding ascii
+
