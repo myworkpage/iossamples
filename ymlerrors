@@ -31,3 +31,46 @@
 2025-06-10T14:55:07.8081620Z [31;1m[31;1m+ FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,f8e5cbcc-035a-4f20-ac22-2240af0ce7a0.ps1[0m
 2025-06-10T14:55:08.0401283Z ##[error]PowerShell exited with code '1'.
 2025-06-10T14:55:08.1284817Z ##[section]Finishing: Distribute AAB via Firebase REST API
+
+
+
+
+
+2025-06-10T15:30:09.8403866Z ##[section]Starting: Distribute AAB via Firebase REST API
+2025-06-10T15:30:09.8421804Z ==============================================================================
+2025-06-10T15:30:09.8421981Z Task         : PowerShell
+2025-06-10T15:30:09.8422049Z Description  : Run a PowerShell script on Linux, macOS, or Windows
+2025-06-10T15:30:09.8422161Z Version      : 2.247.1
+2025-06-10T15:30:09.8422230Z Author       : Microsoft Corporation
+2025-06-10T15:30:09.8422307Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/powershell
+2025-06-10T15:30:09.8422432Z ==============================================================================
+2025-06-10T15:30:11.7268799Z Generating script.
+2025-06-10T15:30:11.8165828Z ========================== Starting Command Output ===========================
+2025-06-10T15:30:11.8610918Z ##[command]"C:\Program Files\PowerShell\7\pwsh.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command ". 'D:\a\_temp\3744b54b-e792-488c-b918-ce6032b794df.ps1'"
+2025-06-10T15:30:13.3647215Z PowerShell version in use:
+2025-06-10T15:30:13.3986184Z 
+2025-06-10T15:30:13.5132845Z [32;1mName                          [0m[32;1m Value[0m
+2025-06-10T15:30:13.5133595Z [32;1m----                          [0m [32;1m-----[0m
+2025-06-10T15:30:13.5133773Z PSVersion                      7.4.10
+2025-06-10T15:30:13.5133944Z PSEdition                      Core
+2025-06-10T15:30:13.5134095Z GitCommitId                    7.4.10
+2025-06-10T15:30:13.5134257Z OS                             Microsoft Windows 10.0.20348
+2025-06-10T15:30:13.5134632Z Platform                       Win32NT
+2025-06-10T15:30:13.5135255Z PSCompatibleVersions           {1.0, 2.0, 3.0, 4.0…}
+2025-06-10T15:30:13.5135430Z PSRemotingProtocolVersion      2.3
+2025-06-10T15:30:13.5135598Z SerializationVersion           1.1.0.1
+2025-06-10T15:30:13.5135757Z WSManStackVersion              3.0
+2025-06-10T15:30:13.5135937Z Using service account file: D:\a\_temp\android-firebase-uat.json
+2025-06-10T15:30:14.9957112Z [31;1mInvoke-RestMethod : [31;1m[0m
+2025-06-10T15:30:14.9957697Z [31;1m[31;1m{[0m
+2025-06-10T15:30:14.9958326Z [31;1m[31;1m  "error": "invalid_request",[0m
+2025-06-10T15:30:14.9959026Z [31;1m[31;1m  "error_description": "Bad Request"[0m
+2025-06-10T15:30:14.9959677Z [31;1m[31;1m}[0m
+2025-06-10T15:30:14.9960251Z [31;1m[31;1mAt D:\a\_temp\3744b54b-e792-488c-b918-ce6032b794df.ps1:56 char:18[0m
+2025-06-10T15:30:14.9960843Z [31;1m[31;1m+ … nResponse = Invoke-RestMethod -Method Post -Uri $creds.token_uri -Con …[0m
+2025-06-10T15:30:14.9962733Z [31;1m[31;1m+               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+2025-06-10T15:30:14.9963726Z [31;1m[31;1m+ CategoryInfo          : InvalidOperation: (Method: POST, Reque…tent-Length: 419[0m
+2025-06-10T15:30:14.9964444Z [31;1m[31;1m}:HttpRequestMessage) [Invoke-RestMethod], HttpResponseException[0m
+2025-06-10T15:30:14.9965218Z [31;1m[31;1m+ FullyQualifiedErrorId : WebCmdletWebResponseException,Microsoft.PowerShell.Commands.InvokeRestMethodCommand[0m
+2025-06-10T15:30:15.1707067Z ##[error]PowerShell exited with code '1'.
+2025-06-10T15:30:15.2272205Z ##[section]Finishing: Distribute AAB via Firebase REST API
