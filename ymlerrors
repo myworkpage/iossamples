@@ -127,3 +127,93 @@
 2025-06-10T16:15:14.5073978Z [31;1m[31;1m+ FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,00a85420-1d70-4b35-a858-5f36031408c8.ps1[0m
 2025-06-10T16:15:14.7115056Z ##[error]PowerShell exited with code '1'.
 2025-06-10T16:15:14.7570311Z ##[section]Finishing: Distribute AAB via Firebase REST API (No gcloud)
+
+
+
+
+
+
+
+
+
+======================== TEST SCRIPT =============================
+
+# Path to service account JSON
+$jsonPath = "android-firebase-uat.json"
+
+Write-Host "🔍 Reading service account from: $jsonPath"
+$creds = Get-Content $jsonPath | ConvertFrom-Json
+
+$jwtHeader = @{ alg = "RS256"; typ = "JWT" } | ConvertTo-Json -Compress
+$now = [int][double]::Parse((Get-Date -UFormat %s))
+$exp = $now + 3600
+
+$audience = "https://oauth2.googleapis.com/token"
+$scope = "https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/firebase"
+
+$jwtClaimSet = @{
+  iss   = $creds.client_email
+  scope = $scope
+  aud   = $audience
+  exp   = $exp
+  iat   = $now
+} | ConvertTo-Json -Compress
+
+function Base64UrlEncode([string]$input) {
+  [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($input)).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+}
+
+$headerEncoded = Base64UrlEncode $jwtHeader
+$claimsEncoded = Base64UrlEncode $jwtClaimSet
+$toSign = "$headerEncoded.$claimsEncoded"
+
+# Decode and import PKCS#8 key
+$rawPem = $creds.private_key
+$privateKeyPem = $rawPem -replace '-----BEGIN PRIVATE KEY-----', '' -replace '-----END PRIVATE KEY-----', '' -replace '\s+', ''
+
+try {
+  $privateKey = [Convert]::FromBase64String($privateKeyPem)
+} catch {
+  Write-Error "❌ Failed to decode base64 private key: $_"
+  exit 1
+}
+
+try {
+  $rsa = [System.Security.Cryptography.RSA]::Create()
+  [int]$bytesRead = 0
+  $rsa.ImportRSAPrivateKey($privateKey, [ref]$bytesRead)
+
+  $signature = $rsa.SignData(
+    [System.Text.Encoding]::UTF8.GetBytes($toSign),
+    [System.Security.Cryptography.HashAlgorithmName]::SHA256,
+    [System.Security.Cryptography.RSASignaturePadding]::Pkcs1
+  )
+
+  $signatureEncoded = [Convert]::ToBase64String($signature).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+  $jwt = "$toSign.$signatureEncoded"
+} catch {
+  Write-Error "❌ Failed to sign JWT: $_"
+  exit 1
+}
+
+Write-Host "`n🧾 JWT prepared:"
+Write-Host $jwt.Substring(0, 80) "... (truncated)"
+
+# Exchange JWT for access token
+try {
+  $tokenResponse = Invoke-RestMethod -Method Post -Uri $audience -ContentType 'application/x-www-form-urlencoded' -Body @{
+    grant_type = 'urn:ietf:params:oauth:grant-type:jwt-bearer'
+    assertion  = $jwt
+  }
+
+  if ($tokenResponse.access_token) {
+    Write-Host "`n✅ Access Token:"
+    Write-Host $tokenResponse.access_token
+  } else {
+    Write-Error "`n❌ Failed to get access token. Full response:"
+    Write-Host ($tokenResponse | ConvertTo-Json -Depth 5)
+  }
+} catch {
+  Write-Error "`n❌ Token request failed: $_"
+}
+
