@@ -73,3 +73,39 @@ Result: False
 2025-06-10T13:05:56.6330664Z  
 2025-06-10T13:05:56.7442086Z ##[error]PowerShell exited with code '1'.
 2025-06-10T13:05:56.7916860Z ##[section]Finishing: Distribute AAB via Firebase REST API (No gcloud)
+
+
+
+2025-06-10T14:29:10.9754819Z ##[section]Starting: Distribute AAB via Firebase REST API
+2025-06-10T14:29:10.9787444Z ==============================================================================
+2025-06-10T14:29:10.9787621Z Task         : PowerShell
+2025-06-10T14:29:10.9787696Z Description  : Run a PowerShell script on Linux, macOS, or Windows
+2025-06-10T14:29:10.9787814Z Version      : 2.247.1
+2025-06-10T14:29:10.9787885Z Author       : Microsoft Corporation
+2025-06-10T14:29:10.9787966Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/powershell
+2025-06-10T14:29:10.9788105Z ==============================================================================
+2025-06-10T14:29:13.0739823Z Generating script.
+2025-06-10T14:29:13.1791425Z ========================== Starting Command Output ===========================
+2025-06-10T14:29:13.2184533Z ##[command]"C:\Program Files\PowerShell\7\pwsh.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command ". 'D:\a\_temp\79c520a4-c2b6-4843-bde5-b795e43625df.ps1'"
+2025-06-10T14:29:15.1813627Z PowerShell version in use:
+2025-06-10T14:29:15.2337311Z 
+2025-06-10T14:29:15.4525592Z [32;1mName                          [0m[32;1m Value[0m
+2025-06-10T14:29:15.4526360Z [32;1m----                          [0m [32;1m-----[0m
+2025-06-10T14:29:15.4526555Z PSVersion                      7.4.10
+2025-06-10T14:29:15.4526738Z PSEdition                      Core
+2025-06-10T14:29:15.4526918Z GitCommitId                    7.4.10
+2025-06-10T14:29:15.4527112Z OS                             Microsoft Windows 10.0.20348
+2025-06-10T14:29:15.4527299Z Platform                       Win32NT
+2025-06-10T14:29:15.4527555Z PSCompatibleVersions           {1.0, 2.0, 3.0, 4.0…}
+2025-06-10T14:29:15.4527760Z PSRemotingProtocolVersion      2.3
+2025-06-10T14:29:15.4527955Z SerializationVersion           1.1.0.1
+2025-06-10T14:29:15.4528185Z WSManStackVersion              3.0
+2025-06-10T14:29:15.4528400Z Using service account file: D:\a\_temp\android-firebase-uat.json
+2025-06-10T14:29:16.1730369Z [31;1mD:\a\_temp\79c520a4-c2b6-4843-bde5-b795e43625df.ps1 : [31;1mFailed to sign JWT: Exception calling "ImportRSAPrivateKey" with "2" argument(s): "Cannot convert the "System.Management.Automation.PSReference`1[System.Int32]" value of type "System.Management.Automation.PSReference`1[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]" to type "System.Int32"."[0m
+2025-06-10T14:29:16.1731302Z [31;1m[31;1mAt line:1 char:1[0m
+2025-06-10T14:29:16.1732085Z [31;1m[31;1m+ . 'D:\a\_temp\79c520a4-c2b6-4843-bde5-b795e43625df.ps1'[0m
+2025-06-10T14:29:16.1733366Z [31;1m[31;1m+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+2025-06-10T14:29:16.1734568Z [31;1m[31;1m+ CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException[0m
+2025-06-10T14:29:16.1737000Z [31;1m[31;1m+ FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,79c520a4-c2b6-4843-bde5-b795e43625df.ps1[0m
+2025-06-10T14:29:16.3549725Z ##[error]PowerShell exited with code '1'.
+2025-06-10T14:29:16.4235918Z ##[section]Finishing: Distribute AAB via Firebase REST API
