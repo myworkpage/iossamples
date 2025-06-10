@@ -101,23 +101,24 @@ jobs:
           # Convert PEM private key to bytes
           $privateKeyPem = $creds.private_key -replace '-----.*?-----', '' -replace '\s+', ''
           $privateKey = [Convert]::FromBase64String($privateKeyPem)
-    
+          
           try {
-            $rsa = [System.Security.Cryptography.RSA]::Create()
-            [ref]$bytesRead = 0
-            $rsa.ImportRSAPrivateKey($privateKey, [ref]$bytesRead)
-    
-            $signature = $rsa.SignData(
-              [System.Text.Encoding]::UTF8.GetBytes($toSign),
-              [System.Security.Cryptography.HashAlgorithmName]::SHA256,
-              [System.Security.Cryptography.RSASignaturePadding]::Pkcs1
-            )
-    
-            $signatureEncoded = [Convert]::ToBase64String($signature).TrimEnd('=').Replace('+', '-').Replace('/', '_')
-            $jwt = "$toSign.$signatureEncoded"
+              $rsa = [System.Security.Cryptography.RSA]::Create()
+              [int]$bytesRead = 0
+              $bytesReadRef = [ref]$bytesRead
+              $rsa.ImportRSAPrivateKey($privateKey, $bytesReadRef)
+          
+              $signature = $rsa.SignData(
+                  [System.Text.Encoding]::UTF8.GetBytes($toSign),
+                  [System.Security.Cryptography.HashAlgorithmName]::SHA256,
+                  [System.Security.Cryptography.RSASignaturePadding]::Pkcs1
+              )
+          
+              $signatureEncoded = [Convert]::ToBase64String($signature).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+              $jwt = "$toSign.$signatureEncoded"
           } catch {
-            Write-Error "Failed to sign JWT: $_"
-            exit 1
+              Write-Error "Failed to sign JWT: $_"
+              exit 1
           }
     
           # Exchange JWT for access token
