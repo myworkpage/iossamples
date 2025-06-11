@@ -1,233 +1,10 @@
-$creds = Get-Content './android-firebase-uat.json' | ConvertFrom-Json
-
-$header = @{ alg = 'RS256'; typ = 'JWT' } | ConvertTo-Json -Compress
-$now = [int][double]::Parse((Get-Date -UFormat %s))
-$exp = $now + 3600
-$payload = @{
-  iss = $creds.client_email
-  scope = 'https://www.googleapis.com/auth/cloud-platform'
-  aud = 'https://oauth2.googleapis.com/token'
-  iat = $now
-  exp = $exp
-} | ConvertTo-Json -Compress
-
-function Base64UrlEncode([string]$input) {
-  [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($input)).TrimEnd('=').Replace('+','-').Replace('/','_')
-}
-
-$headerEncoded = Base64UrlEncode $header
-$payloadEncoded = Base64UrlEncode $payload
-$toSign = "$headerEncoded.$payloadEncoded"
-
-# Key decode
-$key = ($creds.private_key -join "`n") -replace '-----.*?-----', '' -replace '\s+', ''
-$bytes = [Convert]::FromBase64String($key)
-
-$rsa = [System.Security.Cryptography.RSA]::Create()
-[int]$bytesRead = 0
-$rsa.ImportPkcs8PrivateKey($bytes, [ref]$bytesRead)
-
-# Sign
-$signature = $rsa.SignData(
-  [System.Text.Encoding]::UTF8.GetBytes($toSign),
-  [System.Security.Cryptography.HashAlgorithmName]::SHA256,
-  [System.Security.Cryptography.RSASignaturePadding]::Pkcs1
-)
-
-$signatureEncoded = [Convert]::ToBase64String($signature).TrimEnd('=').Replace('+','-').Replace('/','_')
-$jwt = "$toSign.$signatureEncoded"
-
-Write-Host "`n✅ JWT:"
-Write-Host $jwt
-
-
-Hope you're doing well. I was working on generating a JWT using a service account and got a bit stuck — the token I'm generating doesn't seem valid (it's coming out looking like binary or garbage output, e.g., starting with ..FngK...).
-
-I've double-checked the signing and encoding steps, but still no luck. Just wanted to check if you're aware of any common issues around this, or if you've encountered something similar before?
-
-Would really appreciate your input if you have a few minutes to spare.
-
-
-
-
-
-
-
-
 # Read service account JSON
 $jsonPath = "./android-firebase-uat.json"
 Write-Host "🔍 Reading service account from: $jsonPath"
 $creds = Get-Content $jsonPath | ConvertFrom-Json
 
 # JWT Header and Claims
-$jwtHeader = @{ alg = "RS256"; typ = "JWT" } | ConvertTo-Json -Compress
-Write-Host "`n📦 JWT Header JSON:"
-Write-Host $jwtHeader
-
-$now = [int][double]::Parse((Get-Date -UFormat %s))
-$exp = $now + 3600
-$scope = "https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/firebase"
-$audience = "https://oauth2.googleapis.com/token"
-
-$jwtClaimSet = @{
-  iss   = $creds.client_email
-  scope = $scope
-  aud   = $audience
-  exp   = $exp
-  iat   = $now
-} | ConvertTo-Json -Compress
-
-Write-Host "`n📦 JWT Claims JSON:"
-Write-Host $jwtClaimSet
-
-# Base64 URL Encode function
-function Base64UrlEncode([string]$input) {
-  return [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($input)).TrimEnd('=').Replace('+', '-').Replace('/', '_')
-}
-
-# Encode header and claims
-$headerEncoded = Base64UrlEncode $jwtHeader
-$claimsEncoded = Base64UrlEncode $jwtClaimSet
-$toSign = "$headerEncoded.$claimsEncoded"
-
-Write-Host "`n🔐 Encoded Header:"
-Write-Host $headerEncoded
-Write-Host "`n🔐 Encoded Claims:"
-Write-Host $claimsEncoded
-Write-Host "`n🧩 Data to Sign (Header.Claims):"
-Write-Host $toSign
-
-# Decode the private key
-$privateKeyPem = $creds.private_key -replace '-----.*?-----', '' -replace '\s+', ''
-$privateKeyBytes = [Convert]::FromBase64String($privateKeyPem)
-
-Write-Host "`n🔑 Decoded Private Key Bytes Length:"
-Write-Host $privateKeyBytes.Length
-
-# Sign the JWT
-try {
-  $rsa = [System.Security.Cryptography.RSA]::Create()
-  [int]$bytesRead = 0
-  $rsa.ImportPkcs8PrivateKey($privateKeyBytes, [ref]$bytesRead)
-  Write-Host "`n✅ RSA Key Imported Successfully (Bytes Read: $bytesRead)"
-
-  $dataToSign = [System.Text.Encoding]::UTF8.GetBytes($toSign)
-  Write-Host "`n📏 Data to Sign (Byte Length): $($dataToSign.Length)"
-
-  $signature = $rsa.SignData(
-    $dataToSign,
-    [System.Security.Cryptography.HashAlgorithmName]::SHA256,
-    [System.Security.Cryptography.RSASignaturePadding]::Pkcs1
-  )
-
-  Write-Host "`n🖊️ Raw Signature Bytes Length: $($signature.Length)"
-
-  $signatureEncoded = [Convert]::ToBase64String($signature).TrimEnd('=').Replace('+','-').Replace('/','_')
-  Write-Host "`n🧾 Encoded Signature:"
-  Write-Host $signatureEncoded
-
-  $jwt = "$toSign.$signatureEncoded"
-  Write-Host "`n✅ Final JWT (first 200 chars):"
-  Write-Host $jwt.Substring(0, [Math]::Min(200, $jwt.Length)) "... (truncated)"
-
-  # Optionally write to file
-  $jwt | Set-Content -Path "./jwt.txt" -Encoding ascii
-  Write-Host "`n📄 Full JWT written to jwt.txt"
-} catch {
-  Write-Error "❌ Failed to sign JWT: $_"
-}
-
-
-
-🔍 Reading service account from: ./android-firebase-uat.json
-
-📦 JWT Header JSON:
-{"typ":"JWT","alg":"RS256"}
-
-📦 JWT Claims JSON:
-{"iss":"firebase-distributor@android-firebase-uat-e0faa.iam.gserviceaccount.com","aud":"https://oauth2.googleapis.com/token","exp":1749667582,"iat":1749663982,"scope":"https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/firebase"}
-
-🔐 Encoded Header:
-
-
-🔐 Encoded Claims:
-
-
-🧩 Data to Sign (Header.Claims):
-.
-
-🔑 Decoded Private Key Bytes Length:
-1216
-
-✅ RSA Key Imported Successfully (Bytes Read: 1216)
-
-📏 Data to Sign (Byte Length): 1
-
-🖊️ Raw Signature Bytes Length: 256
-
-🧾 Encoded Signature:
-NpPtgBpwJjY8_3we5lXMeDoEeezU_477Vd44WPP6sS3fW9GayGDWdwv-2vDrffXqQ0MHgZ3oGdNJ7FhaHj3jmzKAr6hovFLAwkFB7I8JeyvKhocy0Io4RMUVtL87yLfKi4xjor0QLrEFw2Ck8N7ay4ebBYoXV8iYQ8GpkORE2Swk89euIsHA6SLfR03RlBRB94Zl4ey_r6e7WCsZqGgXMCNkXW7D1cu9wYEYxjqvQ6d6PHfUKAkdn8I_245exauexyN_F_TScnovSPZm1vgqSJ81roqSLJVifcc8ttwg_wqgWPTsnCYi0D2URSzd9QmzC35NehOKK0q50QjuQwbPiw
-
-✅ Final JWT (first 200 chars):
-..NpPtgBpwJjY8_3we5lXMeDoEeezU_477Vd44WPP6sS3fW9GayGDWdwv-2vDrffXqQ0MHgZ3oGdNJ7FhaHj3jmzKAr6hovFLAwkFB7I8JeyvKhocy0Io4RMUVtL87yLfKi4xjor0QLrEFw2Ck8N7ay4ebBYoXV8iYQ8GpkORE2Swk89euIsHA6SLfR03RlBRB94Zl4e ... (truncated)
-
-📄 Full JWT written to jwt.txt
-
-
-
-
-
-
-
-
-
-
-
-U3lzdGVtLkNvbGxlY3Rpb25zLkFycmF5TGlzdCtBcnJheUxpc3RFbnVtZXJhdG9yU2ltcGxl.U3lzdGVtLkNvbGxlY3Rpb25zLkFycmF5TGlzdCtBcnJheUxpc3RFbnVtZXJhdG9yU2ltcGxl.JYGnLUHED6-Q6fb3FS0xUel8VexTY97O66tQcvAltnazJsH_cyakdczruoqsxVb0ZxRat_JItmHtgxEFm4Zsh2_J-iLcxOVleDT6vZB6qaFO7OC-IyZ6rttNLKgXz3iLHuvhKALD24Bl5RHkjR2GVD7rtHLbLJ6EOgZXkpuY1HyexnzASsdzz13jzIJ5GhB_xJoJx3zPg-hreuLTjxnxirSigU9qJBA_aiflzYxy4a3oYKLhhiQAgd6_GyvcL_Y-8sOcXsBJoPMO9dLcrgNo9gQjVzXLVwADMEC--wdoMkrFw4qh3TDlQmeBu-hXFBQAq3n27a91m_JQluucXyNnbg
-
-
-
-
- input type FUll Name
-System.Collections.ArrayList+ArrayListEnumeratorSimple
-MethodInvocationException: C:\Users\c71383\Downloads\Azure\test-token.ps1:46
-Line |
-  46 |    $utf8Bytes = [System.Text.Encoding]::UTF8.GetBytes($input)
-     |    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     | Exception calling "GetBytes" with "1" argument(s): "Value cannot be null. (Parameter 'chars')"
-Forced utf8Bytes :
-
-MethodInvocationException: C:\Users\c71383\Downloads\Azure\test-token.ps1:49
-Line |
-  49 |    return [Convert]::ToBase64String($utf8Bytes).TrimEnd('=').Replace(' …
-     |           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     | Exception calling "ToBase64String" with "1" argument(s): "Value cannot be null. (Parameter 'inArray')"
-
- input type FUll Name
-System.Collections.ArrayList+ArrayListEnumeratorSimple
-MethodInvocationException: C:\Users\c71383\Downloads\Azure\test-token.ps1:46
-Line |
-  46 |    $utf8Bytes = [System.Text.Encoding]::UTF8.GetBytes($input)
-     |    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     | Exception calling "GetBytes" with "1" argument(s): "Value cannot be null. (Parameter 'chars')"
-Forced utf8Bytes :
-
-MethodInvocationException: C:\Users\c71383\Downloads\Azure\test-token.ps1:49
-Line |
-  49 |    return [Convert]::ToBase64String($utf8Bytes).TrimEnd('=').Replace(' …
-     |           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     | Exception calling "ToBase64String" with "1" argument(s): "Value cannot be null. (Parameter 'inArray')"
-
-
-
-
-# Read service account JSON
-$jsonPath = "./android-firebase-uat.json"
-Write-Host "🔍 Reading service account from: $jsonPath"
-$creds = Get-Content $jsonPath | ConvertFrom-Json
-
-# JWT Header and Claims
-$jwtHeaderRaw = @{ alg = "RS256"; typ = "JWT" } | ConvertTo-Json -Compress
+$jwtHeaderRaw = (@{ alg = "RS256"; typ = "JWT" } | ConvertTo-Json -Compress)
 Write-Host "`n📦 JWT Header JSON:"
 Write-Host $jwtHeaderRaw
 
@@ -239,42 +16,43 @@ $exp = $now + 3600
 $scope = "https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/firebase"
 $audience = "https://oauth2.googleapis.com/token"
 
-$jwtClaimSetRaw = @{
+$jwtClaimSetRaw = (@{
   iss   = $creds.client_email
   scope = $scope
   aud   = $audience
   exp   = $exp
   iat   = $now
-} | ConvertTo-Json -Compress
+} | ConvertTo-Json -Compress)
 
 Write-Host "`n📦 JWT Claims JSON:"
 Write-Host $jwtClaimSetRaw
+
+Write-Host "`n JWT Claims FUll Name" 
+Write-Host $jwtClaimSetRaw.GetType().FullName
 
 $jwtHeader = [string]$jwtHeaderRaw
 $jwtClaimSet = [string]$jwtClaimSetRaw
 
 Write-Host "`Forced JWT Header JSON:"
-Write-Host $jwtHeader
+Write-Host $jwtHeader.GetType().FullName
 
 Write-Host "`Forced JWT Claims JSON:"
-Write-Host $jwtClaimSet
+Write-Host $jwtClaimSet.GetType().FullName
 
 # Base64 URL Encode function
-function Base64UrlEncode($input) {
-    Write-Host "`n input type FUll Name"
-    Write-Host $input.GetType().FullName
-    if($input -isnot [string]) {
-        $input = $input | ConvertTo-Json -Compress
-    }
-  $utf8Bytes = [System.Text.Encoding]::UTF8.GetBytes($input)
-  Write-Host "`Forced utf8Bytes :"
-  Write-Host $utf8Bytes
-  return [Convert]::ToBase64String($utf8Bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+function Base64UrlEncode {
+    param([string]$inputParam)
+    Write-Host "`n🔎 Entered Base64UrlEncode()"
+    Write-Host "🔎 Input value: $inputParam"
+    Write-Host "🔎 Input type: $($inputParam.GetType().FullName)" 
+
+    $utf8Bytes = [System.Text.Encoding]::UTF8.GetBytes($inputParam)
+    return [Convert]::ToBase64String($utf8Bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
 }
 
 # Encode header and claims
-$headerEncoded = Base64UrlEncode "$jwtHeader"
-$claimsEncoded = Base64UrlEncode "$jwtClaimSet"
+$headerEncoded = Base64UrlEncode -inputParam $jwtHeader
+$claimsEncoded = Base64UrlEncode -inputParam $jwtClaimSet
 $toSign = "$headerEncoded.$claimsEncoded"
 
 Write-Host "`n🔐 Encoded Header:"
@@ -325,30 +103,6 @@ try {
 }
 
 
+Jwt:
 
-
-function Base64UrlEncode($input) {
-    Write-Host "`n🔎 Entered Base64UrlEncode()"
-    Write-Host "🔎 Input value: $input"
-    Write-Host "🔎 Input type: $($input.GetType().FullName)"
-
-    if ($input -is [System.Collections.IEnumerable] -and $input -isnot [string]) {
-        Write-Host "❗ Input is an IEnumerable but not a string. Possibly being piped or looped."
-        foreach ($item in $input) {
-            Write-Host "🔹 Element in enumerable: $item (type: $($item.GetType().FullName))"
-        }
-        throw "🚨 Function received unexpected collection instead of a single string."
-    }
-
-    $utf8Bytes = [System.Text.Encoding]::UTF8.GetBytes($input)
-    return [Convert]::ToBase64String($utf8Bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
-}
-
-
-🔎 Entered Base64UrlEncode()
-🔎 Input value:
-🔎 Input type: System.Collections.ArrayList+ArrayListEnumeratorSimple
-
-🔎 Entered Base64UrlEncode()
-🔎 Input value:
-🔎 Input type: System.Collections.ArrayList+ArrayListEnumeratorSimple
+eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NDk2NzAwOTcsImV4cCI6MTc0OTY3MzY5NywiaXNzIjoiZmlyZWJhc2UtZGlzdHJpYnV0b3JAYW5kcm9pZC1maXJlYmFzZS11YXQtZTBmYWEuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJhdWQiOiJodHRwczovL29hdXRoMi5nb29nbGVhcGlzLmNvbS90b2tlbiIsInNjb3BlIjoiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vYXV0aC9jbG91ZC1wbGF0Zm9ybSBodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9hdXRoL2ZpcmViYXNlIn0.J9oIQtnbGz6XfhnDQQ2K6b1Cv4uNil9oQqBqjX6OdKXfZLbx8KwKaaqSo8Imz4qPRaow2wbjP54Ws5kBYw-N9J2JFH-Pt7SXCai6jzWFeFFqDv3-QKWyEbVwrjYouBSt0hbPYjunNLgLS2yPk9yJswBpRU5EH_39pEU150v0dalAxCBbyOXXXAt7geMnGhOObC25j-j4jbpXSuhX8rRYAG7Io6IdcyrDwUExfXwLOI9PNKGQtCggyvFjPv0-DRtNd_30K1Vz5aK9_xlv__lXiHBkonZDIuyjaaiJ3FSJq81q9TYUg4SXnGx3Q3bSbFIwPSeK2y0JZdGMUFiAHBiMQg
