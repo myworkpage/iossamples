@@ -217,3 +217,109 @@ Line |
   49 |    return [Convert]::ToBase64String($utf8Bytes).TrimEnd('=').Replace(' …
      |           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      | Exception calling "ToBase64String" with "1" argument(s): "Value cannot be null. (Parameter 'inArray')"
+
+
+
+
+# Read service account JSON
+$jsonPath = "./android-firebase-uat.json"
+Write-Host "🔍 Reading service account from: $jsonPath"
+$creds = Get-Content $jsonPath | ConvertFrom-Json
+
+# JWT Header and Claims
+$jwtHeaderRaw = @{ alg = "RS256"; typ = "JWT" } | ConvertTo-Json -Compress
+Write-Host "`n📦 JWT Header JSON:"
+Write-Host $jwtHeaderRaw
+
+Write-Host "`n JWT Header FUll Name" 
+Write-Host $jwtHeaderRaw.GetType().FullName
+
+$now = [int][double]::Parse((Get-Date -UFormat %s))
+$exp = $now + 3600
+$scope = "https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/firebase"
+$audience = "https://oauth2.googleapis.com/token"
+
+$jwtClaimSetRaw = @{
+  iss   = $creds.client_email
+  scope = $scope
+  aud   = $audience
+  exp   = $exp
+  iat   = $now
+} | ConvertTo-Json -Compress
+
+Write-Host "`n📦 JWT Claims JSON:"
+Write-Host $jwtClaimSetRaw
+
+$jwtHeader = [string]$jwtHeaderRaw
+$jwtClaimSet = [string]$jwtClaimSetRaw
+
+Write-Host "`Forced JWT Header JSON:"
+Write-Host $jwtHeader
+
+Write-Host "`Forced JWT Claims JSON:"
+Write-Host $jwtClaimSet
+
+# Base64 URL Encode function
+function Base64UrlEncode($input) {
+    Write-Host "`n input type FUll Name"
+    Write-Host $input.GetType().FullName
+    if($input -isnot [string]) {
+        $input = $input | ConvertTo-Json -Compress
+    }
+  $utf8Bytes = [System.Text.Encoding]::UTF8.GetBytes($input)
+  Write-Host "`Forced utf8Bytes :"
+  Write-Host $utf8Bytes
+  return [Convert]::ToBase64String($utf8Bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+}
+
+# Encode header and claims
+$headerEncoded = Base64UrlEncode "$jwtHeader"
+$claimsEncoded = Base64UrlEncode "$jwtClaimSet"
+$toSign = "$headerEncoded.$claimsEncoded"
+
+Write-Host "`n🔐 Encoded Header:"
+Write-Host $headerEncoded
+Write-Host "`n🔐 Encoded Claims:"
+Write-Host $claimsEncoded
+Write-Host "`n🧩 Data to Sign (Header.Claims):"
+Write-Host $toSign
+
+# Decode the private key
+$privateKeyPem = $creds.private_key -replace '-----.*?-----', '' -replace '\s+', ''
+$privateKeyBytes = [Convert]::FromBase64String($privateKeyPem)
+
+Write-Host "`n🔑 Decoded Private Key Bytes Length:"
+Write-Host $privateKeyBytes.Length
+
+# Sign the JWT
+try {
+  $rsa = [System.Security.Cryptography.RSA]::Create()
+  [int]$bytesRead = 0
+  $rsa.ImportPkcs8PrivateKey($privateKeyBytes, [ref]$bytesRead)
+  Write-Host "`n✅ RSA Key Imported Successfully (Bytes Read: $bytesRead)"
+
+  $dataToSign = [System.Text.Encoding]::UTF8.GetBytes($toSign)
+  Write-Host "`n📏 Data to Sign (Byte Length): $($dataToSign.Length)"
+
+  $signature = $rsa.SignData(
+    $dataToSign,
+    [System.Security.Cryptography.HashAlgorithmName]::SHA256,
+    [System.Security.Cryptography.RSASignaturePadding]::Pkcs1
+  )
+
+  Write-Host "`n🖊️ Raw Signature Bytes Length: $($signature.Length)"
+
+  $signatureEncoded = [Convert]::ToBase64String($signature).TrimEnd('=').Replace('+','-').Replace('/','_')
+  Write-Host "`n🧾 Encoded Signature:"
+  Write-Host $signatureEncoded
+
+  $jwt = "$toSign.$signatureEncoded"
+  Write-Host "`n✅ Final JWT (first 200 chars):"
+  Write-Host $jwt.Substring(0, [Math]::Min(200, $jwt.Length)) "... (truncated)"
+
+  # Optionally write to file
+  $jwt | Set-Content -Path "./jwt.txt" -Encoding ascii
+  Write-Host "`n📄 Full JWT written to jwt.txt"
+} catch {
+  Write-Error "❌ Failed to sign JWT: $_"
+}
