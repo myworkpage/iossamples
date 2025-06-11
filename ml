@@ -343,3 +343,12 @@ function Base64UrlEncode($input) {
     $utf8Bytes = [System.Text.Encoding]::UTF8.GetBytes($input)
     return [Convert]::ToBase64String($utf8Bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
 }
+
+
+🔎 Entered Base64UrlEncode()
+🔎 Input value:
+🔎 Input type: System.Collections.ArrayList+ArrayListEnumeratorSimple
+
+🔎 Entered Base64UrlEncode()
+🔎 Input value:
+🔎 Input type: System.Collections.ArrayList+ArrayListEnumeratorSimple
