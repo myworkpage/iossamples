@@ -483,3 +483,90 @@ public class TokenHelper {
 2025-06-11T21:40:23.1391754Z     + FullyQualifiedErrorId : NoMatchFoundForCriteria,Microsoft.PowerShell.PackageManagement.Cmdlets.InstallPackage
 2025-06-11T21:40:23.1392222Z  
 2025-06-11T21:40:23.1762893Z ##[section]Finishing: Distribute AAB via Firebase App Distribution
+
+
+
+
+trigger:
+- main
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildDir: '$(Build.ArtifactStagingDirectory)/UAT'
+  aabFileName: 'com.bcbsla.mobile.droid-Signed.aab'
+  firebaseAppId: '<YOUR_FIREBASE_APP_ID>' # 🔁 Replace this with your actual Firebase App ID
+
+stages:
+- stage: Build
+  displayName: 'Build AAB'
+  jobs:
+  - job: BuildJob
+    steps:
+    - task: Gradle@2
+      displayName: 'Build AAB'
+      inputs:
+        workingDirectory: ''
+        gradleWrapperFile: 'gradlew'
+        gradleOptions: '-Xmx4096m'
+        tasks: ':app:bundleUatRelease'
+
+    - task: CopyFiles@2
+      displayName: 'Copy AAB to staging directory'
+      inputs:
+        SourceFolder: '$(System.DefaultWorkingDirectory)/app/build/outputs/bundle/uatRelease'
+        Contents: '**/*.aab'
+        TargetFolder: '$(buildDir)'
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish AAB Artifact'
+      inputs:
+        PathtoPublish: '$(buildDir)'
+        ArtifactName: 'aab-artifact'
+        publishLocation: 'Container'
+
+- stage: Distribute
+  displayName: 'Distribute to Firebase App Distribution'
+  dependsOn: Build
+  jobs:
+  - job: DistributeJob
+    steps:
+    - download: current
+      artifact: aab-artifact
+
+    - task: DownloadSecureFile@1
+      name: firebaseServiceAccount
+      displayName: 'Download Firebase Service Account JSON'
+      inputs:
+        secureFile: 'android-firebase-uat.json'
+
+    - powershell: |
+        $ErrorActionPreference = "Stop"
+
+        $aabPath = "$(Pipeline.Workspace)/aab-artifact/$(aabFileName)"
+        $serviceAccountPath = "$(firebaseServiceAccount.secureFilePath)"
+        $firebaseCliUrl = "https://firebase.tools/bin/win/cli"
+
+        Write-Host "✅ Checking AAB file at: $aabPath"
+        if (-Not (Test-Path $aabPath)) {
+          Write-Error "❌ AAB file not found at: $aabPath"
+          exit 1
+        }
+
+        # Download Firebase CLI if not available
+        if (-not (Get-Command firebase -ErrorAction SilentlyContinue)) {
+          Write-Host "📥 Downloading Firebase CLI..."
+          Invoke-WebRequest -Uri $firebaseCliUrl -OutFile "firebase.exe"
+        }
+
+        Write-Host "🚀 Distributing to Firebase App Distribution..."
+        .\firebase.exe appdistribution:distribute "$aabPath" `
+          --app "$(firebaseAppId)" `
+          --token "$(FIREBASE_TOKEN)" `
+          --release-notes "Distributed from Azure DevOps pipeline." `
+          --groups "internal-testers"
+
+        Write-Host "✅ Upload complete!"
+      displayName: 'Distribute AAB via Firebase CLI'
+
