@@ -106,3 +106,98 @@ try {
 Jwt:
 
 eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NDk2NzAwOTcsImV4cCI6MTc0OTY3MzY5NywiaXNzIjoiZmlyZWJhc2UtZGlzdHJpYnV0b3JAYW5kcm9pZC1maXJlYmFzZS11YXQtZTBmYWEuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJhdWQiOiJodHRwczovL29hdXRoMi5nb29nbGVhcGlzLmNvbS90b2tlbiIsInNjb3BlIjoiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vYXV0aC9jbG91ZC1wbGF0Zm9ybSBodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9hdXRoL2ZpcmViYXNlIn0.J9oIQtnbGz6XfhnDQQ2K6b1Cv4uNil9oQqBqjX6OdKXfZLbx8KwKaaqSo8Imz4qPRaow2wbjP54Ws5kBYw-N9J2JFH-Pt7SXCai6jzWFeFFqDv3-QKWyEbVwrjYouBSt0hbPYjunNLgLS2yPk9yJswBpRU5EH_39pEU150v0dalAxCBbyOXXXAt7geMnGhOObC25j-j4jbpXSuhX8rRYAG7Io6IdcyrDwUExfXwLOI9PNKGQtCggyvFjPv0-DRtNd_30K1Vz5aK9_xlv__lXiHBkonZDIuyjaaiJ3FSJq81q9TYUg4SXnGx3Q3bSbFIwPSeK2y0JZdGMUFiAHBiMQg
+
+
+
+
+
+
+
+
+
+- task: PowerShell@2
+  displayName: "Distribute AAB via Firebase App Distribution"
+  inputs:
+    targetType: 'inline'
+    pwsh: true
+    script: |
+      $serviceAccountJsonPath = "$(Build.SourcesDirectory)/android-firebase-uat.json"
+      $aabFilePath = "$(Build.ArtifactStagingDirectory)/UAT/com.bcbsla.mobile.droid-Signed.aab"
+      $firebaseAppId = "FIREBASE_APP_ID_HERE"  # Replace with your Firebase App ID
+
+      $serviceAccount = Get-Content -Raw -Path $serviceAccountJsonPath | ConvertFrom-Json
+      $privateKey = $serviceAccount.private_key
+      $clientEmail = $serviceAccount.client_email
+      $projectId = $serviceAccount.project_id
+
+      $now = [int][double]::Parse((Get-Date -UFormat %s))
+      $exp = $now + 3600
+
+      $jwtHeader = @{
+        alg = "RS256"
+        typ = "JWT"
+      } | ConvertTo-Json -Compress
+
+      $jwtClaims = @{
+        iss = $clientEmail
+        scope = "https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/firebase"
+        aud = "https://oauth2.googleapis.com/token"
+        iat = $now
+        exp = $exp
+      } | ConvertTo-Json -Compress
+
+      function Base64UrlEncode {
+        param([byte[]]$bytes)
+        return [Convert]::ToBase64String($bytes).Replace('+', '-').Replace('/', '_').TrimEnd('=')
+      }
+
+      $jwtHeaderEncoded = Base64UrlEncode -bytes ([System.Text.Encoding]::UTF8.GetBytes($jwtHeader))
+      $jwtClaimsEncoded = Base64UrlEncode -bytes ([System.Text.Encoding]::UTF8.GetBytes($jwtClaims))
+      $jwtToSign = "$jwtHeaderEncoded.$jwtClaimsEncoded"
+
+      $privateKeyPem = $privateKey -replace '-----.*?-----', '' -replace '\s+', ''
+      $privateKeyBytes = [Convert]::FromBase64String($privateKeyPem)
+      $signer = [System.Security.Cryptography.RSA]::Create()
+      $signer.ImportPkcs8PrivateKey([ref]$privateKeyBytes, [ref]0)
+      $signatureBytes = $signer.SignData([System.Text.Encoding]::UTF8.GetBytes($jwtToSign), [System.Security.Cryptography.HashAlgorithmName]::SHA256, [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
+      $jwtSigned = "$jwtToSign." + (Base64UrlEncode -bytes $signatureBytes)
+
+      $response = Invoke-RestMethod -Method Post -Uri "https://oauth2.googleapis.com/token" -ContentType "application/x-www-form-urlencoded" -Body @{
+        grant_type = "urn:ietf:params:oauth:grant-type:jwt-bearer"
+        assertion = $jwtSigned
+      }
+
+      $accessToken = $response.access_token
+      Write-Host "✅ Access token acquired."
+
+      $aabBytes = Get-Content -Encoding Byte -Path $aabFilePath
+      $boundary = [System.Guid]::NewGuid().ToString()
+      $LF = "`r`n"
+
+      $preamble = (
+        "--$boundary$LF" +
+        "Content-Disposition: form-data; name=`"file`"; filename=`"app.aab`"$LF" +
+        "Content-Type: application/octet-stream$LF$LF"
+      )
+      $preambleBytes = [System.Text.Encoding]::UTF8.GetBytes($preamble)
+      $closing = "$LF--$boundary--$LF"
+      $closingBytes = [System.Text.Encoding]::UTF8.GetBytes($closing)
+
+      $memoryStream = New-Object System.IO.MemoryStream
+      $memoryStream.Write($preambleBytes, 0, $preambleBytes.Length)
+      $memoryStream.Write($aabBytes, 0, $aabBytes.Length)
+      $memoryStream.Write($closingBytes, 0, $closingBytes.Length)
+      $memoryStream.Seek(0, 'Begin') | Out-Null
+
+      $headers = @{
+        "Authorization" = "Bearer $accessToken"
+        "Content-Type"  = "multipart/form-data; boundary=$boundary"
+      }
+
+      $uploadUri = "https://firebaseappdistribution.googleapis.com/upload/v1/projects/$projectId/apps/$firebaseAppId/releases:upload"
+      Write-Host "📤 Uploading AAB to Firebase App Distribution..."
+      $response = Invoke-RestMethod -Uri $uploadUri -Method POST -Headers $headers -Body $memoryStream
+
+      Write-Host "✅ Upload successful!"
+      $response | ConvertTo-Json -Depth 10
+
