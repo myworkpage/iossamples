@@ -139,3 +139,36 @@ try {
 
 
 
+🔍 Reading service account from: ./android-firebase-uat.json
+
+📦 JWT Header JSON:
+{"typ":"JWT","alg":"RS256"}
+
+📦 JWT Claims JSON:
+{"iss":"firebase-distributor@android-firebase-uat-e0faa.iam.gserviceaccount.com","aud":"https://oauth2.googleapis.com/token","exp":1749667582,"iat":1749663982,"scope":"https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/firebase"}
+
+🔐 Encoded Header:
+
+
+🔐 Encoded Claims:
+
+
+🧩 Data to Sign (Header.Claims):
+.
+
+🔑 Decoded Private Key Bytes Length:
+1216
+
+✅ RSA Key Imported Successfully (Bytes Read: 1216)
+
+📏 Data to Sign (Byte Length): 1
+
+🖊️ Raw Signature Bytes Length: 256
+
+🧾 Encoded Signature:
+NpPtgBpwJjY8_3we5lXMeDoEeezU_477Vd44WPP6sS3fW9GayGDWdwv-2vDrffXqQ0MHgZ3oGdNJ7FhaHj3jmzKAr6hovFLAwkFB7I8JeyvKhocy0Io4RMUVtL87yLfKi4xjor0QLrEFw2Ck8N7ay4ebBYoXV8iYQ8GpkORE2Swk89euIsHA6SLfR03RlBRB94Zl4ey_r6e7WCsZqGgXMCNkXW7D1cu9wYEYxjqvQ6d6PHfUKAkdn8I_245exauexyN_F_TScnovSPZm1vgqSJ81roqSLJVifcc8ttwg_wqgWPTsnCYi0D2URSzd9QmzC35NehOKK0q50QjuQwbPiw
+
+✅ Final JWT (first 200 chars):
+..NpPtgBpwJjY8_3we5lXMeDoEeezU_477Vd44WPP6sS3fW9GayGDWdwv-2vDrffXqQ0MHgZ3oGdNJ7FhaHj3jmzKAr6hovFLAwkFB7I8JeyvKhocy0Io4RMUVtL87yLfKi4xjor0QLrEFw2Ck8N7ay4ebBYoXV8iYQ8GpkORE2Swk89euIsHA6SLfR03RlBRB94Zl4e ... (truncated)
+
+📄 Full JWT written to jwt.txt
