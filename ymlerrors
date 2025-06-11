@@ -390,3 +390,67 @@ try {
 2025-06-11T21:06:58.8110910Z [31;1m[31;1m+ FullyQualifiedErrorId : MethodArgumentConversionInvalidCastArgument[0m
 2025-06-11T21:06:58.8357524Z ##[error]PowerShell exited with code '1'.
 2025-06-11T21:06:58.9214999Z ##[section]Finishing: Distribute AAB via Firebase App Distribution
+
+
+- task: PowerShell@2
+  displayName: 'Distribute AAB via Firebase App Distribution'
+  inputs:
+    targetType: inline
+    script: |
+      # Load service account JSON path
+      $serviceAccountJsonPath = "$(DownloadFirebaseKey.secureFilePath)"
+      $aabFilePath = "$(aabFilePath)"
+      $appId = "YOUR_FIREBASE_APP_ID"  # 🔁 Replace this with your actual Firebase App ID
+
+      if (-Not (Test-Path $aabFilePath)) {
+        Write-Error "❌ AAB file not found at path: $aabFilePath"
+        exit 1
+      }
+
+      # Install Google.Apis.Auth (needed to fetch token easily)
+      Install-PackageProvider -Name NuGet -Force -Scope CurrentUser
+      Install-Module -Name 'Google.Apis.Auth' -Force -Scope CurrentUser
+
+      # Add helper to get access token
+      Add-Type -TypeDefinition @"
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Google.Apis.Auth.OAuth2;
+
+public class TokenHelper {
+    public static string GetAccessToken(string jsonPath) {
+        GoogleCredential credential = GoogleCredential.FromFile(jsonPath)
+            .CreateScoped("https://www.googleapis.com/auth/cloud-platform", "https://www.googleapis.com/auth/firebase");
+        var tokenTask = credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
+        tokenTask.Wait();
+        return tokenTask.Result;
+    }
+}
+"@ -ReferencedAssemblies "Google.Apis.Auth.dll"
+
+      # Get access token
+      $accessToken = [TokenHelper]::GetAccessToken($serviceAccountJsonPath)
+      Write-Host "✅ Access token acquired."
+
+      # Upload AAB to Firebase App Distribution
+      $boundary = [System.Guid]::NewGuid().ToString()
+      $headers = @{
+        Authorization = "Bearer $accessToken"
+        "X-Goog-Upload-Protocol" = "raw"
+        "X-Goog-Upload-File-Name" = [System.IO.Path]::GetFileName($aabFilePath)
+        "X-Goog-Upload-Command" = "upload, finalize"
+        "X-Goog-Upload-Header-Content-Length" = (Get-Item $aabFilePath).Length
+      }
+
+      $uploadUrl = "https://firebaseappdistribution.googleapis.com/upload/v1/apps/$appId/releases:upload"
+      Write-Host "📤 Uploading AAB to Firebase..."
+
+      Invoke-RestMethod -Uri $uploadUrl `
+        -Method POST `
+        -Headers $headers `
+        -InFile $aabFilePath `
+        -ContentType "application/octet-stream"
+
+      Write-Host "✅ AAB uploaded successfully to Firebase App Distribution."
+
