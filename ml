@@ -184,3 +184,36 @@ NpPtgBpwJjY8_3we5lXMeDoEeezU_477Vd44WPP6sS3fW9GayGDWdwv-2vDrffXqQ0MHgZ3oGdNJ7Fha
 
 
 U3lzdGVtLkNvbGxlY3Rpb25zLkFycmF5TGlzdCtBcnJheUxpc3RFbnVtZXJhdG9yU2ltcGxl.U3lzdGVtLkNvbGxlY3Rpb25zLkFycmF5TGlzdCtBcnJheUxpc3RFbnVtZXJhdG9yU2ltcGxl.JYGnLUHED6-Q6fb3FS0xUel8VexTY97O66tQcvAltnazJsH_cyakdczruoqsxVb0ZxRat_JItmHtgxEFm4Zsh2_J-iLcxOVleDT6vZB6qaFO7OC-IyZ6rttNLKgXz3iLHuvhKALD24Bl5RHkjR2GVD7rtHLbLJ6EOgZXkpuY1HyexnzASsdzz13jzIJ5GhB_xJoJx3zPg-hreuLTjxnxirSigU9qJBA_aiflzYxy4a3oYKLhhiQAgd6_GyvcL_Y-8sOcXsBJoPMO9dLcrgNo9gQjVzXLVwADMEC--wdoMkrFw4qh3TDlQmeBu-hXFBQAq3n27a91m_JQluucXyNnbg
+
+
+
+
+ input type FUll Name
+System.Collections.ArrayList+ArrayListEnumeratorSimple
+MethodInvocationException: C:\Users\c71383\Downloads\Azure\test-token.ps1:46
+Line |
+  46 |    $utf8Bytes = [System.Text.Encoding]::UTF8.GetBytes($input)
+     |    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Exception calling "GetBytes" with "1" argument(s): "Value cannot be null. (Parameter 'chars')"
+Forced utf8Bytes :
+
+MethodInvocationException: C:\Users\c71383\Downloads\Azure\test-token.ps1:49
+Line |
+  49 |    return [Convert]::ToBase64String($utf8Bytes).TrimEnd('=').Replace(' …
+     |           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Exception calling "ToBase64String" with "1" argument(s): "Value cannot be null. (Parameter 'inArray')"
+
+ input type FUll Name
+System.Collections.ArrayList+ArrayListEnumeratorSimple
+MethodInvocationException: C:\Users\c71383\Downloads\Azure\test-token.ps1:46
+Line |
+  46 |    $utf8Bytes = [System.Text.Encoding]::UTF8.GetBytes($input)
+     |    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Exception calling "GetBytes" with "1" argument(s): "Value cannot be null. (Parameter 'chars')"
+Forced utf8Bytes :
+
+MethodInvocationException: C:\Users\c71383\Downloads\Azure\test-token.ps1:49
+Line |
+  49 |    return [Convert]::ToBase64String($utf8Bytes).TrimEnd('=').Replace(' …
+     |           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Exception calling "ToBase64String" with "1" argument(s): "Value cannot be null. (Parameter 'inArray')"
