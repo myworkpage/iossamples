@@ -323,3 +323,23 @@ try {
 } catch {
   Write-Error "❌ Failed to sign JWT: $_"
 }
+
+
+
+
+function Base64UrlEncode($input) {
+    Write-Host "`n🔎 Entered Base64UrlEncode()"
+    Write-Host "🔎 Input value: $input"
+    Write-Host "🔎 Input type: $($input.GetType().FullName)"
+
+    if ($input -is [System.Collections.IEnumerable] -and $input -isnot [string]) {
+        Write-Host "❗ Input is an IEnumerable but not a string. Possibly being piped or looped."
+        foreach ($item in $input) {
+            Write-Host "🔹 Element in enumerable: $item (type: $($item.GetType().FullName))"
+        }
+        throw "🚨 Function received unexpected collection instead of a single string."
+    }
+
+    $utf8Bytes = [System.Text.Encoding]::UTF8.GetBytes($input)
+    return [Convert]::ToBase64String($utf8Bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+}
