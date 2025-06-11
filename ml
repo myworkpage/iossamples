@@ -201,3 +201,24 @@ eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NDk2NzAwOTcsImV4cCI6MTc0OTY3MzY
       Write-Host "✅ Upload successful!"
       $response | ConvertTo-Json -Depth 10
 
+
+
+2025-06-11T20:29:16.5174679Z ##[section]Starting: Distribute AAB via Firebase App Distribution
+2025-06-11T20:29:16.5193237Z ==============================================================================
+2025-06-11T20:29:16.5193423Z Task         : PowerShell
+2025-06-11T20:29:16.5193495Z Description  : Run a PowerShell script on Linux, macOS, or Windows
+2025-06-11T20:29:16.5193598Z Version      : 2.247.1
+2025-06-11T20:29:16.5193682Z Author       : Microsoft Corporation
+2025-06-11T20:29:16.5193762Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/powershell
+2025-06-11T20:29:16.5193889Z ==============================================================================
+2025-06-11T20:29:18.5192532Z Generating script.
+2025-06-11T20:29:18.6232056Z ========================== Starting Command Output ===========================
+2025-06-11T20:29:18.6582767Z ##[command]"C:\Program Files\PowerShell\7\pwsh.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command ". 'D:\a\_temp\d974dded-ac24-4a89-9cfb-620e4777f6e3.ps1'"
+2025-06-11T20:29:20.9558643Z [31;1mGet-Content : [31;1mCannot find path 'D:\a\1\s\android-firebase-uat.json' because it does not exist.[0m
+2025-06-11T20:29:20.9559628Z [31;1m[31;1mAt D:\a\_temp\d974dded-ac24-4a89-9cfb-620e4777f6e3.ps1:8 char:19[0m
+2025-06-11T20:29:20.9560141Z [31;1m[31;1m+ … rviceAccount = Get-Content -Raw -Path $serviceAccountJsonPath | Conve …[0m
+2025-06-11T20:29:20.9560532Z [31;1m[31;1m+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+2025-06-11T20:29:20.9561032Z [31;1m[31;1m+ CategoryInfo          : ObjectNotFound: (D:\a\1\s\android-firebase-uat.json:String) [Get-Content], ItemNotFoundException[0m
+2025-06-11T20:29:20.9561508Z [31;1m[31;1m+ FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.GetContentCommand[0m
+2025-06-11T20:29:21.0677767Z ##[error]PowerShell exited with code '1'.
+2025-06-11T20:29:21.1280687Z ##[section]Finishing: Distribute AAB via Firebase App Distribution
