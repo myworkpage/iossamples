@@ -366,3 +366,27 @@ try {
 2025-06-11T20:01:33.4380461Z [31;1m[31;1m+ FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,6af50ca7-423f-4317-8f54-b9f0f9bfd6a7.ps1[0m
 2025-06-11T20:01:33.5644142Z ##[error]PowerShell exited with code '1'.
 2025-06-11T20:01:33.6445820Z ##[section]Finishing: Distribute AAB via Firebase REST API
+
+
+
+
+
+2025-06-11T21:06:52.4824029Z ##[section]Starting: Distribute AAB via Firebase App Distribution
+2025-06-11T21:06:52.4840374Z ==============================================================================
+2025-06-11T21:06:52.4840544Z Task         : PowerShell
+2025-06-11T21:06:52.4840637Z Description  : Run a PowerShell script on Linux, macOS, or Windows
+2025-06-11T21:06:52.4840751Z Version      : 2.247.1
+2025-06-11T21:06:52.4840822Z Author       : Microsoft Corporation
+2025-06-11T21:06:52.4840897Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/powershell
+2025-06-11T21:06:52.4841020Z ==============================================================================
+2025-06-11T21:06:54.1353651Z Generating script.
+2025-06-11T21:06:54.3470928Z ========================== Starting Command Output ===========================
+2025-06-11T21:06:54.3736053Z ##[command]"C:\Program Files\PowerShell\7\pwsh.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command ". 'D:\a\_temp\6ac4b30b-b32e-43ae-b15c-dc528656e3f0.ps1'"
+2025-06-11T21:06:58.8106779Z [31;1m[31;1mCannot convert argument "source", with value: "System.Management.Automation.PSReference`1[System.Byte[]]", for "ImportPkcs8PrivateKey" to type "System.ReadOnlySpan`1[System.Byte]": "Cannot convert to the ByRef-like type "System.ReadOnlySpan`1[System.Byte]". ByRef-like types are not supported in PowerShell."[0m
+2025-06-11T21:06:58.8107869Z [31;1m[31;1mAt D:\a\_temp\6ac4b30b-b32e-43ae-b15c-dc528656e3f0.ps1:41 char:1[0m
+2025-06-11T21:06:58.8108291Z [31;1m[31;1m+ $signer.ImportPkcs8PrivateKey([ref]$privateKeyBytes, [ref]0)[0m
+2025-06-11T21:06:58.8108694Z [31;1m[31;1m+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+2025-06-11T21:06:58.8109910Z [31;1m[31;1m+ CategoryInfo          : NotSpecified: (:) [], ParentContainsErrorRecordException[0m
+2025-06-11T21:06:58.8110910Z [31;1m[31;1m+ FullyQualifiedErrorId : MethodArgumentConversionInvalidCastArgument[0m
+2025-06-11T21:06:58.8357524Z ##[error]PowerShell exited with code '1'.
+2025-06-11T21:06:58.9214999Z ##[section]Finishing: Distribute AAB via Firebase App Distribution
