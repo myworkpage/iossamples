@@ -454,3 +454,32 @@ public class TokenHelper {
 
       Write-Host "✅ AAB uploaded successfully to Firebase App Distribution."
 
+
+
+
+2025-06-11T21:40:03.7184602Z ##[section]Starting: Distribute AAB via Firebase App Distribution
+2025-06-11T21:40:03.7201219Z ==============================================================================
+2025-06-11T21:40:03.7201406Z Task         : PowerShell
+2025-06-11T21:40:03.7201477Z Description  : Run a PowerShell script on Linux, macOS, or Windows
+2025-06-11T21:40:03.7201594Z Version      : 2.247.1
+2025-06-11T21:40:03.7201665Z Author       : Microsoft Corporation
+2025-06-11T21:40:03.7201744Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/powershell
+2025-06-11T21:40:03.7201870Z ==============================================================================
+2025-06-11T21:40:06.3664861Z Generating script.
+2025-06-11T21:40:06.3666568Z ========================== Starting Command Output ===========================
+2025-06-11T21:40:06.3668647Z ##[command]"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command ". 'D:\a\_temp\1d6de25e-c3a9-4119-b0f8-5436fb481d2f.ps1'"
+2025-06-11T21:40:18.2298085Z 
+2025-06-11T21:40:18.2309605Z Name                           Version          Source           Summary                                               
+2025-06-11T21:40:18.2309972Z ----                           -------          ------           -------                                               
+2025-06-11T21:40:18.2314456Z nuget                          2.8.5.208        https://cdn.o... NuGet provider for the OneGet meta-package manager    
+2025-06-11T21:40:23.1118091Z PackageManagement\Install-Package : No match was found for the specified search criteria and module name 
+2025-06-11T21:40:23.1119385Z ##[error]PowerShell exited with code '1'.
+2025-06-11T21:40:23.1387808Z 'Google.Apis.Auth'. Try Get-PSRepository to see all available registered module repositories.
+2025-06-11T21:40:23.1388318Z At C:\Program Files\WindowsPowerShell\Modules\PowerShellGet\2.2.5\PSModule.psm1:9711 char:34
+2025-06-11T21:40:23.1388622Z + ... talledPackages = PackageManagement\Install-Package @PSBoundParameters
+2025-06-11T21:40:23.1388895Z +                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2025-06-11T21:40:23.1390958Z     + CategoryInfo          : ObjectNotFound: (Microsoft.Power....InstallPackage:InstallPackage) [Install-Package], Ex 
+2025-06-11T21:40:23.1391287Z    ception
+2025-06-11T21:40:23.1391754Z     + FullyQualifiedErrorId : NoMatchFoundForCriteria,Microsoft.PowerShell.PackageManagement.Cmdlets.InstallPackage
+2025-06-11T21:40:23.1392222Z  
+2025-06-11T21:40:23.1762893Z ##[section]Finishing: Distribute AAB via Firebase App Distribution
