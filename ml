@@ -39,3 +39,12 @@ $jwt = "$toSign.$signatureEncoded"
 
 Write-Host "`n✅ JWT:"
 Write-Host $jwt
+
+
+Hope you're doing well. I was working on generating a JWT using a service account and got a bit stuck — the token I'm generating doesn't seem valid (it's coming out looking like binary or garbage output, e.g., starting with ..FngK...).
+
+I've double-checked the signing and encoding steps, but still no luck. Just wanted to check if you're aware of any common issues around this, or if you've encountered something similar before?
+
+Would really appreciate your input if you have a few minutes to spare.
+
+
