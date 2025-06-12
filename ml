@@ -403,3 +403,32 @@ eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NDk2NzAwOTcsImV4cCI6MTc0OTY3MzY
           Write-Host "🚀 AAB distributed to group: $distributionGroup"
 
 
+
+
+
+
+
+2025-06-12T19:22:03.4948268Z ##[section]Starting: Upload .aab to Firebase App Distribution (via REST API)
+2025-06-12T19:22:03.4966664Z ==============================================================================
+2025-06-12T19:22:03.4966836Z Task         : PowerShell
+2025-06-12T19:22:03.4966907Z Description  : Run a PowerShell script on Linux, macOS, or Windows
+2025-06-12T19:22:03.4967184Z Version      : 2.247.1
+2025-06-12T19:22:03.4967255Z Author       : Microsoft Corporation
+2025-06-12T19:22:03.4967341Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/powershell
+2025-06-12T19:22:03.4967450Z ==============================================================================
+2025-06-12T19:22:05.1533934Z Generating script.
+2025-06-12T19:22:05.2522357Z ========================== Starting Command Output ===========================
+2025-06-12T19:22:05.2812599Z ##[command]"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command ". 'D:\a\_temp\bed5adb9-2435-46ce-942d-815e6b021e3f.ps1'"
+2025-06-12T19:22:05.6670404Z At D:\a\_temp\bed5adb9-2435-46ce-942d-815e6b021e3f.ps1:80 char:35
+2025-06-12T19:22:05.6671797Z +                                   ~~~~~~~~~~~~~~
+2025-06-12T19:22:05.6672334Z Variable reference is not valid. ':' was not followed by a valid variable name character. Consider using ${} to 
+2025-06-12T19:22:05.6672811Z delimit the name.
+2025-06-12T19:22:05.6673145Z At D:\a\_temp\bed5adb9-2435-46ce-942d-815e6b021e3f.ps1:23 char:26
+2025-06-12T19:22:05.6673482Z + Add-Type -TypeDefinition @"
+2025-06-12T19:22:05.6673764Z +                          ~~
+2025-06-12T19:22:05.6674061Z The string is missing the terminator: "@.
+2025-06-12T19:22:05.6675666Z     + CategoryInfo          : ParserError: (:) [], ParseException
+2025-06-12T19:22:05.6675945Z     + FullyQualifiedErrorId : InvalidVariableReferenceWithDrive
+2025-06-12T19:22:05.6676412Z  
+2025-06-12T19:22:05.7584915Z ##[error]PowerShell exited with code '1'.
+2025-06-12T19:22:05.8065233Z ##[section]Finishing: Upload .aab to Firebase App Distribution (via REST API)
