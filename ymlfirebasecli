@@ -1,0 +1,106 @@
+trigger:
+  branches:
+    include:
+      - master
+      - feat/*
+  paths:
+    include:
+      - src/app/**
+    exclude:
+      - src/api/**
+
+jobs:
+  - job: Android_Uat
+    displayName: 'Build and Distribute Android UAT'
+    pool:
+      vmImage: 'windows-latest'
+
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Use .NET from global.json'
+      inputs:
+        useGlobalJson: true
+
+    - task: CmdLine@2
+      displayName: 'Install MAUI Workload'
+      inputs:
+        script: 'dotnet workload install maui'
+
+    - task: DeleteFiles@1
+      displayName: 'Clean API Folder'
+      inputs:
+        SourceFolder: '$(Agent.BuildDirectory)'
+        Contents: 'src/api/**'
+        RemoveSourceFolder: true
+
+    - task: JavaToolInstaller@0
+      displayName: 'Install JDK 11'
+      inputs:
+        versionSpec: '11'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Build Android UAT Project'
+      inputs:
+        command: 'build'
+        projects: 'src/app/Bcbsla.Mobile.App.Droid/Bcbsla.Mobile.App.Droid.csproj'
+        arguments: '-c Release_Test -f:net9.0-android35.0'
+
+    - task: CopyFiles@2
+      displayName: 'Copy AAB to Staging'
+      inputs:
+        SourceFolder: '$(Agent.BuildDirectory)'
+        Contents: '**/*-Signed.aab'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)/UAT'
+        flattenFolders: true
+
+    - task: NodeTool@0
+      displayName: 'Install Node.js'
+      inputs:
+        versionSpec: '20.x'
+
+    - script: |
+        npm install -g firebase-tools
+      displayName: 'Install Firebase CLI'
+
+    - task: DownloadSecureFile@1
+      name: downloadFirebaseJson
+      displayName: 'Download Firebase Service Account JSON'
+      inputs:
+        secureFile: 'android-firebase-uat.json'
+
+    - powershell: |
+        $firebaseTokenFile = "$(downloadFirebaseJson.secureFilePath)"
+        $aabFilePath = "$(Build.ArtifactStagingDirectory)/UAT/com.bcbsla.mobile.droid-Signed.aab"
+        $firebaseAppId = "1:1076824969090:android:52c3d66c9ea0e4afc1c99b"  # ✅ Replace with your actual app ID
+        $distributionGroup = "uat-testers"  # ✅ Replace with your Firebase tester group name if needed
+
+        if (-Not (Test-Path $aabFilePath)) {
+          Write-Error "❌ AAB file not found at path: $aabFilePath"
+          exit 1
+        }
+
+        Write-Host "✅ Found AAB at $aabFilePath"
+        Write-Host "📤 Uploading to Firebase App Distribution..."
+
+        firebase appdistribution:distribute "$aabFilePath" `
+          --app "$firebaseAppId" `
+          --token "$(FIREBASE_CLI_TOKEN)" `
+          --release-notes "Automated UAT build" `
+          --groups "$distributionGroup"
+
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "❌ Firebase upload failed."
+          exit 1
+        }
+
+        Write-Host "✅ AAB uploaded successfully."
+      displayName: 'Distribute AAB via Firebase CLI'
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish UAT Artifacts'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/UAT'
+        ArtifactName: 'drop_uat'
+        publishLocation: 'Container'
