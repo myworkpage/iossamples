@@ -456,3 +456,24 @@ public class TokenHelper {
 }
 "@ -ReferencedAssemblies "Google.Apis.Auth.dll"
 
+
+
+
+Z ##[command]"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command ". 'D:\a\_temp\e3453507-b59d-4bab-96a7-9d1de87ff4db.ps1'"
+2025-06-12T19:43:17.8948532Z ✅ Found AAB at D:\a\1\a/UAT/com.bcbsla.mobile.droid-Signed.aab
+2025-06-12T19:43:27.5997652Z 
+2025-06-12T19:43:27.6011347Z Name                           Version          Source           Summary                                               
+2025-06-12T19:43:27.6011920Z ----                           -------          ------           -------                                               
+2025-06-12T19:43:27.6012794Z nuget                          2.8.5.208        https://cdn.o... NuGet provider for the OneGet meta-package manager    
+2025-06-12T19:43:30.9021319Z PackageManagement\Install-Package : No match was found for the specified search criteria and module name 
+2025-06-12T19:43:30.9021763Z 'Google.Apis.Auth'. Try Get-PSRepository to see all available registered module repositories.
+2025-06-12T19:43:30.9022463Z At C:\Program Files\WindowsPowerShell\Modules\PowerShellGet\2.2.5\PSModule.psm1:9711 char:34
+2025-06-12T19:43:30.9023094Z + ... talledPackages = PackageManagement\Install-Package @PSBoundParameters
+2025-06-12T19:43:30.9023747Z +                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2025-06-12T19:43:30.9024237Z     + CategoryInfo          : ObjectNotFound: (Microsoft.Power....InstallPackage:InstallPackage) [Install-Package], Ex 
+2025-06-12T19:43:30.9025041Z    ception
+2025-06-12T19:43:30.9025570Z     + FullyQualifiedErrorId : NoMatchFoundForCriteria,Microsoft.PowerShell.PackageManagement.Cmdlets.InstallPackage
+2025-06-12T19:43:30.9026082Z  
+2025-06-12T19:43:31.0682438Z ##[error]PowerShell exited with code '1'.
+2025-06-12T19:43:31.0906091Z ##[section]Finishing: Upload .aab to Firebase App Distribution (via REST API)
+
