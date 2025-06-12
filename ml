@@ -432,3 +432,27 @@ eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NDk2NzAwOTcsImV4cCI6MTc0OTY3MzY
 2025-06-12T19:22:05.6676412Z  
 2025-06-12T19:22:05.7584915Z ##[error]PowerShell exited with code '1'.
 2025-06-12T19:22:05.8065233Z ##[section]Finishing: Upload .aab to Firebase App Distribution (via REST API)
+
+
+
+
+
+
+
+Add-Type -TypeDefinition @"
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Google.Apis.Auth.OAuth2;
+
+public class TokenHelper {
+    public static string GetAccessToken(string jsonPath) {
+        GoogleCredential credential = GoogleCredential.FromFile(jsonPath)
+            .CreateScoped("https://www.googleapis.com/auth/cloud-platform", "https://www.googleapis.com/auth/firebase");
+        var tokenTask = credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
+        tokenTask.Wait();
+        return tokenTask.Result;
+    }
+}
+"@ -ReferencedAssemblies "Google.Apis.Auth.dll"
+
