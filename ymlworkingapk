@@ -1,0 +1,109 @@
+trigger:
+  branches:
+    include:
+      - master
+      - feat/*
+  paths:
+    include:
+      - src/app/**
+    exclude:
+      - src/api/**
+
+jobs:
+  - job: Android_Uat
+    displayName: 'Build and Distribute Android UAT'
+    pool:
+      vmImage: 'windows-latest'
+
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Use .NET from global.json'
+      inputs:
+        useGlobalJson: true
+
+    - task: CmdLine@2
+      displayName: 'Install MAUI Workload'
+      inputs:
+        script: 'dotnet workload install maui'
+
+    - task: DeleteFiles@1
+      displayName: 'Clean API Folder'
+      inputs:
+        SourceFolder: '$(Agent.BuildDirectory)'
+        Contents: 'src/api/**'
+        RemoveSourceFolder: true
+
+    - task: JavaToolInstaller@0
+      displayName: 'Install JDK 11'
+      inputs:
+        versionSpec: '11'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Build Android UAT Project'
+      inputs:
+        command: 'build'
+        projects: 'src/app/Bcbsla.Mobile.App.Droid/Bcbsla.Mobile.App.Droid.csproj'
+        arguments: '-c Release_Test -f:net9.0-android35.0'
+
+    - task: CopyFiles@2
+      displayName: 'Copy APK to Staging'
+      inputs:
+        SourceFolder: '$(Agent.BuildDirectory)'
+        Contents: '**/*-Signed.apk'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)/UAT'
+        flattenFolders: true
+
+    - task: NodeTool@0
+      displayName: 'Install Node.js'
+      inputs:
+        versionSpec: '20.x'
+
+    - script: |
+        npm install -g firebase-tools
+      displayName: 'Install Firebase CLI'
+
+    - task: DownloadSecureFile@1
+      name: downloadFirebaseJson
+      displayName: 'Download Firebase Service Account JSON'
+      inputs:
+        secureFile: 'android-firebase-uat.json'
+
+    - powershell: |
+        $firebaseCLIToken = $env:FIREBASETOKEN_UAT
+        $firebaseTokenFile = "$(downloadFirebaseJson.secureFilePath)"
+        $apkFilePath = "$(Build.ArtifactStagingDirectory)/UAT/com.bcbsla.mobile.droid-Signed.apk"
+        $firebaseAppId = "1:123456789098765434567898765445678"  # ✅ Replace with your actual app ID
+        $distributionGroup = "uat_qa"  # ✅ Replace with your Firebase tester group name if needed
+
+        if (-Not (Test-Path $apkFilePath)) {
+          Write-Error "❌ APK file not found at path: $apkFilePath"
+          exit 1
+        }
+
+        Write-Host "✅ Found APK at $apkFilePath"
+        Write-Host "📤 Uploading to Firebase App Distribution..."
+
+        firebase appdistribution:distribute "$apkFilePath" `
+          --app "$firebaseAppId" `
+          --token "$firebaseCLIToken" `
+          --release-notes "Automated UAT build" `
+          --groups "$distributionGroup"
+
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "❌ Firebase upload failed."
+          exit 1
+        }
+
+        Write-Host "✅ APK uploaded successfully."
+      displayName: 'Distribute APK via Firebase CLI'
+      env:
+        FIREBASETOKEN_UAT: $(FIREBASETOKEN_UAT)
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish UAT Artifacts'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/UAT'
+        ArtifactName: 'drop_uat'
+        publishLocation: 'Container'
