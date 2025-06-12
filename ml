@@ -222,3 +222,98 @@ eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NDk2NzAwOTcsImV4cCI6MTc0OTY3MzY
 2025-06-11T20:29:20.9561508Z [31;1m[31;1m+ FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.GetContentCommand[0m
 2025-06-11T20:29:21.0677767Z ##[error]PowerShell exited with code '1'.
 2025-06-11T20:29:21.1280687Z ##[section]Finishing: Distribute AAB via Firebase App Distribution
+
+
+
+
+
+
+
+
+- task: DownloadSecureFile@1
+  name: downloadFirebaseJson
+  displayName: 'Download Firebase Service Account JSON'
+  inputs:
+    secureFile: 'android-firebase-uat.json'
+
+- powershell: |
+    $ErrorActionPreference = 'Stop'
+
+    # 🔐 Inputs
+    $serviceAccountJson = "$(downloadFirebaseJson.secureFilePath)"
+    $aabFilePath = "$(Build.ArtifactStagingDirectory)/UAT/com.bcbsla.mobile.droid-Signed.aab"
+    $firebaseAppId = "1:1076824969090:android:52c3d66c9ea0e4afc1c99b"
+    $distributionGroup = "uat-testers"
+    $releaseNotes = "Automated UAT build"
+
+    if (-Not (Test-Path $aabFilePath)) {
+      Write-Error "❌ AAB not found at $aabFilePath"
+      exit 1
+    }
+
+    Write-Host "🔐 Getting access token..."
+
+    # Install required assemblies
+    Install-PackageProvider -Name NuGet -Force -Scope CurrentUser
+    Install-Module -Name Google.Apis.Auth -Force -Scope CurrentUser -AllowClobber
+
+    Add-Type -TypeDefinition @"
+    using System;
+    using Google.Apis.Auth.OAuth2;
+    using System.Threading.Tasks;
+
+    public class TokenHelper {
+      public static string GetAccessToken(string jsonPath) {
+        GoogleCredential cred = GoogleCredential.FromFile(jsonPath)
+          .CreateScoped(new[] {
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/firebase"
+          });
+        var tokenTask = cred.UnderlyingCredential.GetAccessTokenForRequestAsync();
+        tokenTask.Wait();
+        return tokenTask.Result;
+      }
+    }
+    "@ -ReferencedAssemblies "Google.Apis.Auth.dll"
+
+    $accessToken = [TokenHelper]::GetAccessToken($serviceAccountJson)
+    Write-Host "✅ Access token acquired."
+
+    Write-Host "📤 Uploading AAB to Firebase App Distribution..."
+
+    $headers = @{
+      "Authorization" = "Bearer $accessToken"
+      "X-Goog-Upload-Protocol" = "raw"
+      "X-Goog-Upload-File-Name" = [System.IO.Path]::GetFileName($aabFilePath)
+      "X-Goog-Upload-Command" = "upload, finalize"
+      "X-Goog-Upload-Header-Content-Length" = (Get-Item $aabFilePath).Length
+    }
+
+    $uploadUrl = "https://firebaseappdistribution.googleapis.com/upload/v1/apps/$firebaseAppId/releases:upload"
+
+    $response = Invoke-RestMethod -Uri $uploadUrl `
+                                  -Method POST `
+                                  -Headers $headers `
+                                  -InFile $aabFilePath `
+                                  -ContentType "application/octet-stream"
+
+    $releaseId = $response.name.Split("/")[-1]
+    Write-Host "✅ AAB uploaded. Release ID: $releaseId"
+
+    # 📨 Add testers/group
+    $distributeUrl = "https://firebaseappdistribution.googleapis.com/v1/apps/$firebaseAppId/releases/$releaseId:distribute"
+
+    $body = @{
+      testerEmails = @()  # optional
+      groupAliases = @($distributionGroup)
+    } | ConvertTo-Json -Depth 3
+
+    Invoke-RestMethod -Uri $distributeUrl `
+                      -Method POST `
+                      -Headers @{ Authorization = "Bearer $accessToken" } `
+                      -ContentType "application/json" `
+                      -Body $body
+
+    Write-Host "✅ Release distributed to group '$distributionGroup'."
+  displayName: 'Distribute .aab to Firebase (REST API)'
+
