@@ -65,147 +65,66 @@ jobs:
         secureFile: 'android-firebase-uat.json'
 
     - task: PowerShell@2
-      displayName: 'Distribute AAB via Firebase REST API (No gcloud)'
+      displayName: 'Distribute AAB via Firebase App Distribution'
       inputs:
-        pwsh: true
-        targetType: 'inline'
+        targetType: inline
         script: |
-          $jsonPath = "$(downloadFirebaseJson.secureFilePath)"
-          Write-Host "🔍 Reading service account from: $jsonPath"
-          $creds = Get-Content $jsonPath | ConvertFrom-Json
+          # Load service account JSON path
+          $serviceAccountJsonPath = "$(downloadFirebaseJson.secureFilePath)"
+          $aabFilePath = "$(Build.ArtifactStagingDirectory)/UAT/com.bcbsla.mobile.droid-Signed.aab"
+          $appId = "1:1076824969090:android:52c3d66c9ea0e4afc1c99b"  # 🔁 Replace this with your actual Firebase App ID
 
-          $jwtHeaderRaw = (@{ alg = "RS256"; typ = "JWT" } | ConvertTo-Json -Compress)
-          Write-Host "\n📦 JWT Header JSON:"
-          Write-Host $jwtHeaderRaw
-
-          Write-Host "\n JWT Header Full Name"
-          Write-Host $jwtHeaderRaw.GetType().FullName
-
-          $now = [int][double]::Parse((Get-Date -UFormat %s))
-          $exp = $now + 3600
-          $scope = "https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/firebase"
-          $audience = "https://oauth2.googleapis.com/token"
-
-          $jwtClaimSetRaw = (@{
-            iss   = $creds.client_email
-            scope = $scope
-            aud   = $audience
-            exp   = $exp
-            iat   = $now
-          } | ConvertTo-Json -Compress)
-
-          Write-Host "\n📦 JWT Claims JSON:"
-          Write-Host $jwtClaimSetRaw
-
-          Write-Host "\n JWT Claims Full Name"
-          Write-Host $jwtClaimSetRaw.GetType().FullName
-
-          $jwtHeader = [string]$jwtHeaderRaw
-          $jwtClaimSet = [string]$jwtClaimSetRaw
-
-          Write-Host "\nForced JWT Header JSON Type:"
-          Write-Host $jwtHeader.GetType().FullName
-          Write-Host "\nForced JWT Claims JSON Type:"
-          Write-Host $jwtClaimSet.GetType().FullName
-
-          function Base64UrlEncode {
-              param([string]$inputParam)
-              Write-Host "\n🔎 Entered Base64UrlEncode()"
-              Write-Host "🔎 Input value: $inputParam"
-              Write-Host "🔎 Input type: $($inputParam.GetType().FullName)"
-
-              $utf8Bytes = [System.Text.Encoding]::UTF8.GetBytes($inputParam)
-              return [Convert]::ToBase64String($utf8Bytes).TrimEnd('=') -replace '\+', '-' -replace '/', '_'
-          }
-
-          $headerEncoded = Base64UrlEncode -inputParam $jwtHeader
-          $claimsEncoded = Base64UrlEncode -inputParam $jwtClaimSet
-          $toSign = "$headerEncoded.$claimsEncoded"
-
-          Write-Host "\n🔐 Encoded Header:"
-          Write-Host $headerEncoded
-          Write-Host "\n🔐 Encoded Claims:"
-          Write-Host $claimsEncoded
-          Write-Host "\n🧩 Data to Sign (Header.Claims):"
-          Write-Host $toSign
-
-          $privateKeyPem = $creds.private_key -replace '-----.*?-----', '' -replace '\s+', ''
-          $privateKeyBytes = [Convert]::FromBase64String($privateKeyPem)
-
-          Write-Host "\n🔑 Decoded Private Key Bytes Length:"
-          Write-Host $privateKeyBytes.Length
-
-          try {
-            $rsa = [System.Security.Cryptography.RSA]::Create()
-            [int]$bytesRead = 0
-            $rsa.ImportPkcs8PrivateKey($privateKeyBytes, [ref]$bytesRead)
-            Write-Host "\n✅ RSA Key Imported Successfully (Bytes Read: $bytesRead)"
-
-            $dataToSign = [System.Text.Encoding]::UTF8.GetBytes($toSign)
-            Write-Host "\n📏 Data to Sign (Byte Length): $($dataToSign.Length)"
-
-            $signature = $rsa.SignData(
-              $dataToSign,
-              [System.Security.Cryptography.HashAlgorithmName]::SHA256,
-              [System.Security.Cryptography.RSASignaturePadding]::Pkcs1
-            )
-
-            Write-Host "\n🖊️ Raw Signature Bytes Length: $($signature.Length)"
-
-            $signatureEncoded = [Convert]::ToBase64String($signature).TrimEnd('=') -replace '\+','-' -replace '/','_'
-            Write-Host "\n🧾 Encoded Signature:"
-            Write-Host $signatureEncoded
-
-            $jwt = "$toSign.$signatureEncoded"
-            Write-Host "\n✅ Final JWT (first 200 chars):"
-            Write-Host $jwt.Substring(0, [Math]::Min(200, $jwt.Length)) "... (truncated)"
-
-            $jwt | Set-Content -Path "./jwt.txt" -Encoding ascii
-            Write-Host "\n📄 Full JWT written to jwt.txt"
-          } catch {
-            Write-Error "❌ Failed to sign JWT: $_"
+          if (-Not (Test-Path $aabFilePath)) {
+            Write-Error "❌ AAB file not found at path: $aabFilePath"
             exit 1
           }
 
-          $tokenResponse = Invoke-RestMethod -Method Post -Uri $audience -ContentType 'application/x-www-form-urlencoded' -Body @{
-            grant_type = 'urn:ietf:params:oauth:grant-type:jwt-bearer'
-            assertion  = $jwt
-          }
+          # Install Google.Apis.Auth (needed to fetch token easily)
+          Install-PackageProvider -Name NuGet -Force -Scope CurrentUser
+          Install-Module -Name 'Google.Apis.Auth' -Force -Scope CurrentUser
 
-          $accessToken = $tokenResponse.access_token
-          if (-not $accessToken) {
-            Write-Error "❌ Failed to retrieve access token."
-            exit 1
-          }
+          # Add helper to get access token
+          Add-Type -TypeDefinition @"
+          using System;
+          using System.Threading;
+          using System.Threading.Tasks;
+          using Google.Apis.Auth.OAuth2;
 
+          public class TokenHelper {
+              public static string GetAccessToken(string jsonPath) {
+                  GoogleCredential credential = GoogleCredential.FromFile(jsonPath)
+                      .CreateScoped("https://www.googleapis.com/auth/cloud-platform", "https://www.googleapis.com/auth/firebase");
+                  var tokenTask = credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
+                  tokenTask.Wait();
+                  return tokenTask.Result;
+              }
+          }
+          "@ -ReferencedAssemblies "Google.Apis.Auth.dll"
+
+          # Get access token
+          $accessToken = [TokenHelper]::GetAccessToken($serviceAccountJsonPath)
           Write-Host "✅ Access token acquired."
 
-          $aabFile = Get-ChildItem "$(Build.ArtifactStagingDirectory)/UAT" -Filter "*-Signed.aab" | Select-Object -First 1
-          if (-not $aabFile) {
-            Write-Error "❌ No signed AAB file found."
-            exit 1
-          }
-
-          Write-Host "Found AAB: $($aabFile.FullName)"
-
+          # Upload AAB to Firebase App Distribution
+          $boundary = [System.Guid]::NewGuid().ToString()
           $headers = @{
-            "Authorization"             = "Bearer $accessToken"
-            "X-Goog-Upload-Protocol"    = "raw"
-            "X-Goog-Upload-File-Name"   = "$($aabFile.Name)"
-            "Content-Type"              = "application/octet-stream"
+            Authorization = "Bearer $accessToken"
+            "X-Goog-Upload-Protocol" = "raw"
+            "X-Goog-Upload-File-Name" = [System.IO.Path]::GetFileName($aabFilePath)
+            "X-Goog-Upload-Command" = "upload, finalize"
+            "X-Goog-Upload-Header-Content-Length" = (Get-Item $aabFilePath).Length
           }
 
-          $uri = "https://firebaseappdistribution.googleapis.com/v1/projects/-/apps/$(FirebaseAppId_UAT)/releases:upload"
+          $uploadUrl = "https://firebaseappdistribution.googleapis.com/upload/v1/apps/$appId/releases:upload"
+          Write-Host "📤 Uploading AAB to Firebase..."
 
-          try {
-            $response = Invoke-RestMethod -Uri $uri -Method POST -Headers $headers -InFile $aabFile.FullName
-            Write-Host "✅ Uploaded to Firebase: $($response.name)"
-          } catch {
-            Write-Error "❌ Upload failed: $_"
-            exit 1
-          }
-      env:
-        FirebaseAppId_UAT: $(FirebaseAppId_UAT)
+          Invoke-RestMethod -Uri $uploadUrl `
+            -Method POST `
+            -Headers $headers `
+            -InFile $aabFilePath `
+            -ContentType "application/octet-stream"
+
+          Write-Host "✅ AAB uploaded successfully to Firebase App Distribution."
 
     - task: PublishBuildArtifacts@1
       displayName: 'Publish UAT Artifacts'
