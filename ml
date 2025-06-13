@@ -555,3 +555,15 @@ Z ##[command]"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo
       Write-Host "✅ AAB uploaded successfully."
 
 
+
+
+Method invocation failed because [System.Security.Cryptography.X509Certificates.X509Certificate2] does not contain a 
+method named 'CreateFromPemFile'.
+At D:\a\_temp\1ca2987b-b116-4b58-a7a3-4f5ddc8d6896.ps1:40 char:1
++ $cert = [System.Security.Cryptography.X509Certificates.X509Certificat ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : MethodNotFound
+ 
+##[error]PowerShell exited with code '1'.
+Finishing: Distribute AAB via Firebase App Distribution (REST API)
