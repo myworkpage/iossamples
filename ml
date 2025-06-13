@@ -567,3 +567,50 @@ At D:\a\_temp\1ca2987b-b116-4b58-a7a3-4f5ddc8d6896.ps1:40 char:1
  
 ##[error]PowerShell exited with code '1'.
 Finishing: Distribute AAB via Firebase App Distribution (REST API)
+
+
+
+
+- task: NodeTool@0
+  displayName: 'Install Node.js'
+  inputs:
+    versionSpec: '20.x'
+
+- task: DownloadSecureFile@1
+  name: downloadFirebaseJson
+  displayName: 'Download Firebase Service Account JSON'
+  inputs:
+    secureFile: 'android-firebase-uat.json'
+
+- script: |
+    npm install -g firebase-tools
+  displayName: 'Install Firebase CLI'
+
+- powershell: |
+    $aabFilePath = "$(Build.ArtifactStagingDirectory)/UAT/com.bcbsla.mobile.droid-Signed.aab"
+    $firebaseAppId = "1:1076824969090:android:52c3d66c9ea0e4afc1c99b"
+    $distributionGroup = "uat-testers"
+
+    if (-Not (Test-Path $aabFilePath)) {
+      Write-Error "❌ AAB file not found at: $aabFilePath"
+      exit 1
+    }
+
+    Write-Host "✅ Found AAB at $aabFilePath"
+    Write-Host "📤 Uploading to Firebase..."
+
+    firebase appdistribution:distribute "$aabFilePath" `
+      --app "$firebaseAppId" `
+      --release-notes "Automated UAT build" `
+      --groups "$distributionGroup"
+
+    if ($LASTEXITCODE -ne 0) {
+      Write-Error "❌ Firebase upload failed."
+      exit 1
+    }
+
+    Write-Host "✅ AAB uploaded successfully."
+  displayName: 'Distribute AAB via Firebase CLI (Service Account)'
+  env:
+    GOOGLE_APPLICATION_CREDENTIALS: $(downloadFirebaseJson.secureFilePath)
+
