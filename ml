@@ -477,3 +477,81 @@ Z ##[command]"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo
 2025-06-12T19:43:31.0682438Z ##[error]PowerShell exited with code '1'.
 2025-06-12T19:43:31.0906091Z ##[section]Finishing: Upload .aab to Firebase App Distribution (via REST API)
 
+
+
+
+
+
+
+- task: PowerShell@2
+  displayName: 'Distribute AAB via Firebase App Distribution (REST API)'
+  inputs:
+    targetType: inline
+    script: |
+      $ErrorActionPreference = 'Stop'
+
+      # Inputs
+      $serviceAccountJsonPath = "$(downloadFirebaseJson.secureFilePath)"
+      $aabFilePath = "$(Build.ArtifactStagingDirectory)/UAT/com.bcbsla.mobile.droid-Signed.aab"
+      $firebaseAppId = "1:1076824969090:android:52c3d66c9ea0e4afc1c99b"  # Replace with your real App ID
+
+      if (-Not (Test-Path $aabFilePath)) {
+        Write-Error "❌ AAB file not found: $aabFilePath"
+        exit 1
+      }
+
+      # Read service account JSON
+      $serviceAccount = Get-Content -Raw -Path $serviceAccountJsonPath | ConvertFrom-Json
+
+      # Build JWT
+      $now = [System.DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+      $header = @{ alg = "RS256"; typ = "JWT" }
+      $claims = @{
+        iss = $serviceAccount.client_email
+        scope = "https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/firebase"
+        aud = "https://oauth2.googleapis.com/token"
+        iat = $now
+        exp = $now + 3600
+      }
+
+      function To-Base64Url($data) {
+        return [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($data)).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+      }
+
+      $jwtHeader = To-Base64Url((ConvertTo-Json $header -Compress))
+      $jwtClaims = To-Base64Url((ConvertTo-Json $claims -Compress))
+      $unsignedJwt = "$jwtHeader.$jwtClaims"
+
+      # Sign JWT
+      $bytesToSign = [System.Text.Encoding]::UTF8.GetBytes($unsignedJwt)
+      $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::CreateFromPemFile($serviceAccountJsonPath)
+      $rsa = $cert.GetRSAPrivateKey()
+      $signature = [Convert]::ToBase64String($rsa.SignData($bytesToSign, [System.Security.Cryptography.HashAlgorithmName]::SHA256, [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+      $jwt = "$unsignedJwt.$signature"
+
+      # Request Access Token
+      $tokenResponse = Invoke-RestMethod -Uri "https://oauth2.googleapis.com/token" -Method Post -ContentType "application/x-www-form-urlencoded" -Body @{
+        grant_type = "urn:ietf:params:oauth:grant-type:jwt-bearer"
+        assertion = $jwt
+      }
+      $accessToken = $tokenResponse.access_token
+      Write-Host "✅ Access token acquired."
+
+      # Upload AAB
+      Write-Host "📤 Uploading AAB to Firebase App Distribution..."
+
+      $headers = @{
+        "Authorization" = "Bearer $accessToken"
+        "X-Goog-Upload-Protocol" = "raw"
+        "X-Goog-Upload-File-Name" = [System.IO.Path]::GetFileName($aabFilePath)
+        "X-Goog-Upload-Command" = "upload, finalize"
+        "X-Goog-Upload-Header-Content-Length" = (Get-Item $aabFilePath).Length
+      }
+
+      $uploadUrl = "https://firebaseappdistribution.googleapis.com/upload/v1/apps/$firebaseAppId/releases:upload"
+
+      Invoke-RestMethod -Uri $uploadUrl -Method POST -Headers $headers -InFile $aabFilePath -ContentType "application/octet-stream"
+
+      Write-Host "✅ AAB uploaded successfully."
+
+
