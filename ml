@@ -614,3 +614,38 @@ Finishing: Distribute AAB via Firebase App Distribution (REST API)
   env:
     GOOGLE_APPLICATION_CREDENTIALS: $(downloadFirebaseJson.secureFilePath)
 
+
+
+
+1. Create the App in Google Play Console
+Go to: https://play.google.com/console
+
+Select your project (or create one)
+
+Click “Create app”
+
+Use the exact same package name as your app (e.g., com.bcbsla.mobile.droid)
+
+Fill in minimal metadata required to save the app
+
+📦 2. Upload a Build
+Go to Release > Internal testing
+
+Click Create a new release
+
+Upload any valid .aab build (can be a dummy build for now)
+
+Complete release steps and click Save (or Publish if needed)
+
+You do NOT need to go live on Play Store
+
+🔁 3. Go Back to Firebase Console
+After the upload, return to Firebase → Project Settings → Integrations → Google Play
+
+Click Link
+
+You should now see your app listed ✅
+
+✅ Why Firebase Requires This
+Firebase checks Google Play Console for an existing, published .aab under your package name — that’s how it ensures the Firebase App Distribution can later push updates through Play.
+
