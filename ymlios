@@ -1,0 +1,167 @@
+trigger:
+  branches:
+    include:
+      - master
+      - feat/*
+  paths:
+    include:
+      - src/app/*
+    exclude:
+      - src/api/*
+
+variables: 
+  - name: binFolder
+    value: 'src/app/Bcbsla.Mobile.App.IOS/bin/'
+  - name: dotNetVersion
+    value: 'net9.0-ios'
+  - name: 'architectureType'
+    value: 'ios-arm64'
+
+jobs:
+  - job: IOS_Uat
+    pool:
+      vmImage: 'macos-15'   # 'macos-latest' value doesn't always load the true latest
+    steps:
+
+    - task: PowerShell@2
+      displayName: Set Xcode v16.3
+      inputs: 
+        targetType: 'inline'
+        script: |
+          echo selecting Xcode 16.3
+          sudo xcode-select -s /Applications/Xcode_16.3.app
+          xcrun xcode-select --print-path      
+
+    - task: CmdLine@2
+      displayName: Displays version of Xcode 
+      inputs:
+        script: 'xcodebuild -version'
+
+    - task: UseDotNet@2
+      inputs:
+        displayName: 'Use version of .NET in global.json'
+        useGlobalJson: true
+
+    - task: CmdLine@2
+      displayName: 'Install dotnet Maui iOS'
+      inputs:
+        script: 'dotnet workload install maui ios --version 9.0.203'
+
+    - task: InstallAppleCertificate@2
+      inputs:
+        certSecureFile: 'DistributionCertificate.p12'
+        certPwd: '$(CertificatePassword)'
+    - task: InstallAppleProvisioningProfile@1
+      inputs:
+        provisioningProfileLocation: 'sourceRepository'
+        provProfileSourceRepository: 'src/app/Bcbslax_AdHoc_profile.mobileprovision'
+        removeProfile: true
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'publish'
+        publishWebProjects: false
+        projects: 'src/app/Bcbsla.Mobile.App.IOS/Bcbsla.Mobile.App.IOS.csproj'
+        arguments: '-c Release_Test -f net9.0-ios /p:ArchiveOnBuild=false /p:EnableAssemblyILStripping=false /p:IsPublishing=true'
+        zipAfterPublish: false
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: '$(agent.builddirectory)'
+        Contents: '**/*.ipa'
+        TargetFolder: '$(build.artifactstagingdirectory)/UAT'
+        flattenFolders: true
+
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: $(system.defaultWorkingDirectory)/$(binFolder)/Release_Test/$(dotNetVersion)/$(architectureType)/Bcbsla.Mobile.App.IOS.app.dSYM  
+        # note: that's what the path looks like fully expanded  
+        # rootFolderOrFile: '/Users/runner/work/1/s/src/app/Bcbsla.Mobile.App.IOS/bin/Release_Test/net9.0-ios/ios-arm64/Bcbsla.Mobile.App.IOS.app.dSYM'
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/UAT/Bcbsla.Mobile.App.IOS.app.dSYM.UAT-$(Build.BuildId).zip'
+        verbose: true
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/UAT'
+        ArtifactName: 'drop_uat'
+        publishLocation: 'Container'
+
+  - job: IOS_Prod
+    pool:
+      vmImage: 'macos-15'   # 'macos-latest' value doesn't always load the true latest
+    steps:
+
+    - task: PowerShell@2
+      displayName: Set Xcode v16.3
+      inputs: 
+        targetType: 'inline'
+        script: |
+          echo selecting Xcode 16.3
+          sudo xcode-select -s /Applications/Xcode_16.3.app
+          xcrun xcode-select --print-path          
+
+    - task: CmdLine@2
+      displayName: Displays version of Xcode 
+      inputs:
+        script: 'xcodebuild -version'
+      
+    - task: CmdLine@2
+      displayName: 'Swap Info plist files'
+      inputs:
+        script: 'mv src/app/Bcbsla.Mobile.App.IOS/Info-AppStore.plist src/app/Bcbsla.Mobile.App.IOS/Info.plist'
+
+    - task: CmdLine@2
+      displayName: 'Swap GoogleService plist files'
+      inputs:
+        script: 'mv src/app/Bcbsla.Mobile.App.IOS/GoogleService-Info.AppStore.plist src/app/Bcbsla.Mobile.App.IOS/GoogleService-Info.plist'        
+
+    - task: UseDotNet@2
+      inputs:
+        displayName: 'Use version of .NET in global.json'
+        useGlobalJson: true
+
+    - task: CmdLine@2
+      displayName: 'Install dotnet maui ios'
+      inputs:
+        script: 'dotnet workload install maui ios --version 9.0.203'
+
+    - task: InstallAppleCertificate@2
+      inputs:
+        certSecureFile: 'DistributionCertificate.p12'
+        certPwd: '$(CertificatePassword)'
+        keychain: 'temp'
+    - task: InstallAppleProvisioningProfile@1
+      inputs:
+        provisioningProfileLocation: 'sourceRepository'
+        provProfileSourceRepository: 'src/app/BCBSLA_Mobile_App.mobileprovision'
+        removeProfile: true
+
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'publish'
+        publishWebProjects: false
+        projects: 'src/app/Bcbsla.Mobile.App.IOS/Bcbsla.Mobile.App.IOS.csproj'
+        arguments: '-c Release_AppStore -f net9.0-ios /p:ArchiveOnBuild=false /p:EnableAssemblyILStripping=false /p:IsPublishing=true'
+        zipAfterPublish: false
+
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: '$(agent.builddirectory)'
+        Contents: '**/*.ipa'
+        TargetFolder: '$(build.artifactstagingdirectory)/PROD'
+        flattenFolders: true
+
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: $(system.defaultWorkingDirectory)/$(binFolder)/Release_AppStore/$(dotNetVersion)/$(architectureType)/Bcbsla.Mobile.App.IOS.app.dSYM 
+        # note: that's what the path looks like fully expanded    
+        # rootFolderOrFile: '/Users/runner/work/1/s/src/app/Bcbsla.Mobile.App.IOS/bin/Release_AppStore/net9.0-ios/ios-arm64/Bcbsla.Mobile.App.IOS.app.dSYM'        
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/PROD/Bcbsla.Mobile.App.IOS.app.dSYM.PROD-$(Build.BuildId).zip'
+        includeRootFolder: 'true'  
+        verbose: true     
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/PROD'
+        ArtifactName: 'drop_prod'
+        publishLocation: 'Container'
