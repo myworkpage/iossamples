@@ -91,16 +91,20 @@ jobs:
             curl -sL https://firebase.tools | bash
 
       # Upload to Firebase App Distribution
-      - task: Bash@3
-        displayName: Upload to Firebase UAT
-        inputs:
-          targetType: 'inline'
-          script: |
-            firebase appdistribution:distribute "$(Build.ArtifactStagingDirectory)/UAT/Bcbsla.Mobile.App.IOS.ipa" \
-              --app "<FIREBASE_IOS_APP_ID_UAT>" \
-              --release-notes "UAT CI Build $(Build.BuildId)" \
-              --testers "your-testers@example.com" \
-              --token "$FIREBASE_TOKEN"
+     - task: Bash@3
+      displayName: Upload to Firebase UAT
+      inputs:
+        targetType: 'inline'
+        script: |
+          if [ -z "$FIREBASE_TOKEN" ]; then
+            echo "Firebase token is missing!"
+            exit 1
+          fi
+          firebase appdistribution:distribute "$(Build.ArtifactStagingDirectory)/UAT/Bcbsla.Mobile.App.IOS.ipa" \
+            --app "<FIREBASE_IOS_APP_ID_UAT>" \
+            --release-notes "Automated UAT CI Build $(Build.BuildId)" \
+            --groups "uat_qa" \
+            --token "$FIREBASE_TOKEN"
 
   - job: IOS_Prod
     pool:
@@ -177,23 +181,3 @@ jobs:
           PathtoPublish: '$(Build.ArtifactStagingDirectory)/PROD'
           ArtifactName: 'drop_prod'
           publishLocation: 'Container'
-
-      # Install Firebase CLI
-      - task: Bash@3
-        displayName: Install Firebase CLI
-        inputs:
-          targetType: 'inline'
-          script: |
-            curl -sL https://firebase.tools | bash
-
-      # Upload to Firebase App Distribution
-      - task: Bash@3
-        displayName: Upload to Firebase PROD
-        inputs:
-          targetType: 'inline'
-          script: |
-            firebase appdistribution:distribute "$(Build.ArtifactStagingDirectory)/PROD/Bcbsla.Mobile.App.IOS.ipa" \
-              --app "<FIREBASE_IOS_APP_ID_PROD>" \
-              --release-notes "Production CI Build $(Build.BuildId)" \
-              --testers "prod-testers@example.com" \
-              --token "$FIREBASE_1//0guBtQvEKDECJCgYIARAAGBASNwF-L9Irlu3iANFqWuU3mEH3JMBwB33sbMLkGpyxvmfXsmPAb3LtbhYjO_t40eZjzQK1FGTaHCA_TOKEN"
