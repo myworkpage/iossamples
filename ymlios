@@ -196,4 +196,4 @@ jobs:
               --app "<FIREBASE_IOS_APP_ID_PROD>" \
               --release-notes "Production CI Build $(Build.BuildId)" \
               --testers "prod-testers@example.com" \
-              --token "$FIREBASE_TOKEN"
+              --token "$FIREBASE_1//0guBtQvEKDECJCgYIARAAGBASNwF-L9Irlu3iANFqWuU3mEH3JMBwB33sbMLkGpyxvmfXsmPAb3LtbhYjO_t40eZjzQK1FGTaHCA_TOKEN"
