@@ -471,4 +471,5 @@ Result: False
 Evaluating: SucceededNode()
 Result: False
 
+##[error]Error: Not found SourceFolder: /Users/runner/work/1/s/src/app/Bcbsla.Mobile.App.IOS/bin/Release_Test/net9.0-ios/ios-arm64/publish
 
