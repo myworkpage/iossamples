@@ -16,6 +16,7 @@ variables:
     value: 'net9.0-ios'
   - name: architectureType
     value: 'ios-arm64'
+  - group: member-mobile-app-ci
 
 jobs:
   - job: IOS_Uat
@@ -75,13 +76,7 @@ jobs:
           archiveType: 'zip'
           archiveFile: '$(Build.ArtifactStagingDirectory)/UAT/Bcbsla.Mobile.App.IOS.app.dSYM.UAT-$(Build.BuildId).zip'
           verbose: true
-
-      - task: PublishBuildArtifacts@1
-        inputs:
-          PathtoPublish: '$(Build.ArtifactStagingDirectory)/UAT'
-          ArtifactName: 'drop_uat'
-          publishLocation: 'Container'
-
+          
       # Install Firebase CLI
       - task: Bash@3
         displayName: Install Firebase CLI
@@ -90,94 +85,35 @@ jobs:
           script: |
             curl -sL https://firebase.tools | bash
 
-      # Upload to Firebase App Distribution
-     - task: Bash@3
-      displayName: Upload to Firebase UAT
-      inputs:
-        targetType: 'inline'
-        script: |
-          if [ -z "$FIREBASE_TOKEN" ]; then
-            echo "Firebase token is missing!"
-            exit 1
-          fi
-          firebase appdistribution:distribute "$(Build.ArtifactStagingDirectory)/UAT/Bcbsla.Mobile.App.IOS.ipa" \
-            --app "<FIREBASE_IOS_APP_ID_UAT>" \
-            --release-notes "Automated UAT CI Build $(Build.BuildId)" \
-            --groups "uat_qa" \
-            --token "$FIREBASE_TOKEN"
-
-  - job: IOS_Prod
-    pool:
-      vmImage: 'macos-15'
-    steps:
-      - task: PowerShell@2
-        displayName: Set Xcode v16.3
+      - task: Bash@3
+        displayName: Debug IPA Path
         inputs:
           targetType: 'inline'
           script: |
-            sudo xcode-select -s /Applications/Xcode_16.3.app
-            xcrun xcode-select --print-path
+            echo "Looking in build directory:"
+            find "$(System.DefaultWorkingDirectory)" -type f -name "*.ipa"
 
-      - task: CmdLine@2
-        displayName: Xcode Version
+      # Upload to Firebase App Distribution
+      - task: Bash@3
+        displayName: Upload to Firebase UAT
         inputs:
-          script: 'xcodebuild -version'
+          targetType: 'inline'
+          script: |
+            export FIREBASE_TOKEN=$(FirebaseToken_UAT)
 
-      - task: CmdLine@2
-        displayName: Swap Info.plist
-        inputs:
-          script: 'mv src/app/Bcbsla.Mobile.App.IOS/Info-AppStore.plist src/app/Bcbsla.Mobile.App.IOS/Info.plist'
+            if [ -z "$FIREBASE_TOKEN" ]; then
+              echo "Firebase token is missing!"
+              exit 1
+            fi
 
-      - task: CmdLine@2
-        displayName: Swap GoogleService-Info.plist
-        inputs:
-          script: 'mv src/app/Bcbsla.Mobile.App.IOS/GoogleService-Info.AppStore.plist src/app/Bcbsla.Mobile.App.IOS/GoogleService-Info.plist'
-
-      - task: UseDotNet@2
-        inputs:
-          useGlobalJson: true
-
-      - task: CmdLine@2
-        displayName: Install .NET MAUI for iOS
-        inputs:
-          script: 'dotnet workload install maui ios --version 9.0.203'
-
-      - task: InstallAppleCertificate@2
-        inputs:
-          certSecureFile: 'DistributionCertificate.p12'
-          certPwd: '$(CertificatePassword)'
-          keychain: 'temp'
-
-      - task: InstallAppleProvisioningProfile@1
-        inputs:
-          provisioningProfileLocation: 'sourceRepository'
-          provProfileSourceRepository: 'src/app/BCBSLA_Mobile_App.mobileprovision'
-          removeProfile: true
-
-      - task: DotNetCoreCLI@2
-        inputs:
-          command: 'publish'
-          publishWebProjects: false
-          projects: 'src/app/Bcbsla.Mobile.App.IOS/Bcbsla.Mobile.App.IOS.csproj'
-          arguments: '-c Release_AppStore -f net9.0-ios /p:ArchiveOnBuild=false /p:EnableAssemblyILStripping=false /p:IsPublishing=true'
-
-      - task: CopyFiles@2
-        inputs:
-          SourceFolder: '$(agent.builddirectory)'
-          Contents: '**/*.ipa'
-          TargetFolder: '$(build.artifactstagingdirectory)/PROD'
-          flattenFolders: true
-
-      - task: ArchiveFiles@2
-        inputs:
-          rootFolderOrFile: $(system.defaultWorkingDirectory)/$(binFolder)/Release_AppStore/$(dotNetVersion)/$(architectureType)/Bcbsla.Mobile.App.IOS.app.dSYM
-          archiveType: 'zip'
-          archiveFile: '$(Build.ArtifactStagingDirectory)/PROD/Bcbsla.Mobile.App.IOS.app.dSYM.PROD-$(Build.BuildId).zip'
-          includeRootFolder: true
-          verbose: true
+            firebase appdistribution:distribute "$(Build.ArtifactStagingDirectory)/UAT/Bcbsla.Mobile.App.IOS.ipa" \
+              --app "1:658107755795:ios:0a47d2f3e85903eb273ee6" \
+              --release-notes "Automated UAT CI Build $(Build.BuildId)" \
+              --groups "uat_qa" \
+              --token "$FIREBASE_TOKEN"    
 
       - task: PublishBuildArtifacts@1
         inputs:
-          PathtoPublish: '$(Build.ArtifactStagingDirectory)/PROD'
-          ArtifactName: 'drop_prod'
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)/UAT'
+          ArtifactName: 'drop_uat'
           publishLocation: 'Container'
