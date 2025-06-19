@@ -16,10 +16,11 @@ variables:
     value: 'net9.0-ios'
   - name: architectureType
     value: 'ios-arm64'
-  - group: member-mobile-app-ci
+  - group: member-mobile-app-ci  # includes FirebaseToken_UAT as a secret
 
 jobs:
   - job: IOS_Uat
+    displayName: "🚀 iOS UAT Build and Firebase Upload"
     pool:
       vmImage: 'macos-15'
     steps:
@@ -32,11 +33,12 @@ jobs:
             xcrun xcode-select --print-path
 
       - task: CmdLine@2
-        displayName: Xcode Version
+        displayName: Check Xcode Version
         inputs:
           script: 'xcodebuild -version'
 
       - task: UseDotNet@2
+        displayName: Use .NET SDK from global.json
         inputs:
           useGlobalJson: true
 
@@ -46,38 +48,42 @@ jobs:
           script: 'dotnet workload install maui ios --version 9.0.203'
 
       - task: InstallAppleCertificate@2
+        displayName: Install Apple Distribution Certificate
         inputs:
           certSecureFile: 'DistributionCertificate.p12'
           certPwd: '$(CertificatePassword)'
 
       - task: InstallAppleProvisioningProfile@1
+        displayName: Install Provisioning Profile
         inputs:
           provisioningProfileLocation: 'sourceRepository'
           provProfileSourceRepository: 'src/app/Bcbslax_AdHoc_profile.mobileprovision'
           removeProfile: true
 
       - task: DotNetCoreCLI@2
+        displayName: Build and Publish iOS App
         inputs:
           command: 'publish'
           publishWebProjects: false
           projects: 'src/app/Bcbsla.Mobile.App.IOS/Bcbsla.Mobile.App.IOS.csproj'
-          arguments: '-c Release_Test -f net9.0-ios /p:ArchiveOnBuild=false /p:EnableAssemblyILStripping=false /p:IsPublishing=true'
+          arguments: '-c Release_Test -f net9.0-ios /p:BuildIpa=true /p:RuntimeIdentifier=ios-arm64 /p:IsPublishing=true'
 
       - task: CopyFiles@2
+        displayName: Copy IPA to Staging Directory
         inputs:
-          SourceFolder: '$(agent.builddirectory)'
+          SourceFolder: '$(System.DefaultWorkingDirectory)/src/app/Bcbsla.Mobile.App.IOS/bin/Release_Test/net9.0-ios/ios-arm64/publish'
           Contents: '**/*.ipa'
-          TargetFolder: '$(build.artifactstagingdirectory)/UAT'
+          TargetFolder: '$(Build.ArtifactStagingDirectory)/UAT'
           flattenFolders: true
 
       - task: ArchiveFiles@2
+        displayName: Archive dSYM Symbols
         inputs:
-          rootFolderOrFile: $(system.defaultWorkingDirectory)/$(binFolder)/Release_Test/$(dotNetVersion)/$(architectureType)/Bcbsla.Mobile.App.IOS.app.dSYM
+          rootFolderOrFile: '$(System.DefaultWorkingDirectory)/$(binFolder)/Release_Test/$(dotNetVersion)/$(architectureType)/Bcbsla.Mobile.App.IOS.app.dSYM'
           archiveType: 'zip'
           archiveFile: '$(Build.ArtifactStagingDirectory)/UAT/Bcbsla.Mobile.App.IOS.app.dSYM.UAT-$(Build.BuildId).zip'
           verbose: true
-          
-      # Install Firebase CLI
+
       - task: Bash@3
         displayName: Install Firebase CLI
         inputs:
@@ -86,33 +92,34 @@ jobs:
             curl -sL https://firebase.tools | bash
 
       - task: Bash@3
-        displayName: Debug IPA Path
-        inputs:
-          targetType: 'inline'
-          script: |
-            echo "Looking in build directory:"
-            find "$(System.DefaultWorkingDirectory)" -type f -name "*.ipa"
-
-      # Upload to Firebase App Distribution
-      - task: Bash@3
-        displayName: Upload to Firebase UAT
+        displayName: 📤 Upload IPA to Firebase App Distribution (UAT)
         inputs:
           targetType: 'inline'
           script: |
             export FIREBASE_TOKEN=$(FirebaseToken_UAT)
 
             if [ -z "$FIREBASE_TOKEN" ]; then
-              echo "Firebase token is missing!"
+              echo "❌ Firebase token is missing!"
               exit 1
             fi
 
-            firebase appdistribution:distribute "$(Build.ArtifactStagingDirectory)/UAT/Bcbsla.Mobile.App.IOS.ipa" \
+            ipa_path=$(find "$(Build.ArtifactStagingDirectory)/UAT" -name "*.ipa" | head -n 1)
+
+            if [ -z "$ipa_path" ]; then
+              echo "❌ IPA file not found in UAT folder!"
+              exit 1
+            fi
+
+            echo "✅ Found IPA: $ipa_path"
+
+            firebase appdistribution:distribute "$ipa_path" \
               --app "1:658107755795:ios:0a47d2f3e85903eb273ee6" \
               --release-notes "Automated UAT CI Build $(Build.BuildId)" \
               --groups "uat_qa" \
-              --token "$FIREBASE_TOKEN"    
+              --token "$FIREBASE_TOKEN"
 
       - task: PublishBuildArtifacts@1
+        displayName: Publish Artifacts for UAT
         inputs:
           PathtoPublish: '$(Build.ArtifactStagingDirectory)/UAT'
           ArtifactName: 'drop_uat'
