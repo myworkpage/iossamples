@@ -473,3 +473,7 @@ Result: False
 
 ##[error]Error: Not found SourceFolder: /Users/runner/work/1/s/src/app/Bcbsla.Mobile.App.IOS/bin/Release_Test/net9.0-ios/ios-arm64/publish
 
+
+
+Error: Failed to upload release. Request to https://firebaseappdistribution.googleapis.com/upload/v1/projects/658107755795/apps/1:658107755795:ios:0a47d2f3e85903eb273ee6/releases:upload had HTTP Error: 403, The caller does not have permission
+
