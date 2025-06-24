@@ -63,15 +63,17 @@ jobs:
       - task: DotNetCoreCLI@2
         displayName: Build and Publish iOS App
         inputs:
-          command: 'publish'
-          publishWebProjects: false
+          command: 'build'
           projects: 'src/app/Bcbsla.Mobile.App.IOS/Bcbsla.Mobile.App.IOS.csproj'
-          arguments: '-c Release_Test -f net9.0-ios /p:BuildIpa=true /p:RuntimeIdentifier=ios-arm64 /p:IsPublishing=true'
+          arguments: >
+            -c Release_Test -f net9.0-ios
+            /p:BuildIpa=true 
+            /p:RuntimeIdentifier=ios-arm64
 
       - task: CopyFiles@2
         displayName: Copy IPA to Staging Directory
         inputs:
-          SourceFolder: '$(System.DefaultWorkingDirectory)/src/app/Bcbsla.Mobile.App.IOS/bin/Release_Test/net9.0-ios/ios-arm64/publish'
+          SourceFolder: '$(System.DefaultWorkingDirectory)/src/app/Bcbsla.Mobile.App.IOS/bin/Release_Test/net9.0-ios/ios-arm64'
           Contents: '**/*.ipa'
           TargetFolder: '$(Build.ArtifactStagingDirectory)/UAT'
           flattenFolders: true
