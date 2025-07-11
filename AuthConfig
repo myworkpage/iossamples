@@ -106,3 +106,41 @@ namespace Bcbsla.DirectEnroll.Web.App_Start
         }
     }
 }
+
+
+
+using Microsoft.Owin;
+using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Web.Configuration;
+
+namespace Bcbsla.DirectEnroll.Web.App_Start
+{
+    public class PingSettingsConfig
+    {
+        private readonly NameValueCollection _appSettings = WebConfigurationManager.AppSettings;
+
+        public PathString PathBase => new PathString(_appSettings["ping:PathBase"]);
+        public PathString AuthCallbackPath => new PathString(_appSettings["ping:AuthCallbackPath"]);
+        public string ErrorUrlPath => _appSettings["ping:ErrorUrlPath"];
+        public IList<string> Scopes => _appSettings["ping:Scopes"]?.Split(' ');
+        public string PingServerUrl => _appSettings["ping:ServerUrl"];
+        public double SessionTimeout => string.IsNullOrWhiteSpace(_appSettings["ping:SessionTimeout"])
+                                 ? 15 : Convert.ToDouble(_appSettings["ping:SessionTimeout"]);
+        public string UniqueClaimTypeIdentifier => _appSettings["ping:UniqueClaimTypeIdentifier"];
+        public string CookieAuthenticationType => _appSettings["ping:CookieAuthenticationType"];
+
+        // Producer Configurations
+        public string ProducerClientId => _appSettings["ping:ProducerClientId"];
+        public string ProducerClientSecret => _appSettings["ping:ProducerClientSecret"];
+
+        // Consumer Configurations
+        public string ConsumerClientId => _appSettings["ping:ConsumerClientId"];
+        public string ConsumerClientSecret => _appSettings["ping:ConsumerClientSecret"];
+
+        // Internal Configurations
+        public string InternalClientSecret => _appSettings["ping:InternalClientSecret"];
+        public string InternalClientId => _appSettings["ping:InternalClientId"];
+    }
+}
